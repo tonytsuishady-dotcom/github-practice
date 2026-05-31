@@ -42,6 +42,8 @@ const el = {
   realm: document.querySelector("#realm"),
   speech: document.querySelector("#speech"),
   taotie: document.querySelector("#taotie"),
+  petShortValue: document.querySelector("#petShortValue"),
+  petUsageText: document.querySelector("#petUsageText"),
   dropZone: document.querySelector("#dropZone"),
   fileInput: document.querySelector("#fileInput"),
   chooseFiles: document.querySelector("#chooseFiles"),
@@ -129,9 +131,16 @@ function bindEvents() {
 async function refreshRateLimits() {
   try {
     const response = await fetch("/api/rate-limits");
-    if (!response.ok) return;
     const data = await response.json();
-    if (!data || data.source !== "codex-app-server") return;
+    if (!response.ok || !data || data.source !== "codex-app-server") {
+      state.source = "Demo";
+      if (data?.detail) {
+        console.info("Codex rate limit fallback:", data.detail);
+      }
+      saveState();
+      render();
+      return;
+    }
     if (data.primary) {
       state.shortRemaining = clamp(Math.round(data.primary.remainingPercent), 0, 100);
       state.shortResetLabel = data.primary.resetLabel || "短期灵脉回转时间未知";
@@ -270,6 +279,10 @@ function render() {
   el.weekMeter.style.width = `${state.weekRemaining}%`;
   el.shortReset.textContent = state.shortResetLabel;
   el.weekReset.textContent = state.weekResetLabel;
+  el.petShortValue.textContent = `${state.shortRemaining}%`;
+  el.petUsageText.textContent = `${state.shortRemaining}%`;
+  el.taotie.style.setProperty("--short-qi", `${state.shortRemaining}%`);
+  el.taotie.style.setProperty("--week-qi", `${state.weekRemaining}%`);
   el.fullness.textContent = state.fullness;
   el.digestRate.textContent = `${state.digestRate}%`;
   el.feedCount.textContent = state.feedCount;
@@ -277,6 +290,9 @@ function render() {
   el.realm.textContent = state.realm;
   el.downloadLatest.disabled = state.scrolls.length === 0;
   el.taotie.classList.toggle("sleepy", state.fullness < 24 || state.shortRemaining < 12);
+  el.taotie.classList.toggle("qi-low", state.shortRemaining < 25);
+  el.taotie.classList.toggle("qi-mid", state.shortRemaining >= 25 && state.shortRemaining < 60);
+  el.taotie.classList.toggle("qi-high", state.shortRemaining >= 60);
   renderLog();
 }
 

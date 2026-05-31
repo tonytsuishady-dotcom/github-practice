@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent
 INBOX = ROOT / "pet-inbox"
+LAST_RATE_LIMIT_ERROR = "Not checked yet."
 
 
 class SpiritHandler(SimpleHTTPRequestHandler):
@@ -28,6 +29,7 @@ class SpiritHandler(SimpleHTTPRequestHandler):
                     {
                         "source": "demo",
                         "message": "Codex app-server unavailable; using demo values.",
+                        "detail": LAST_RATE_LIMIT_ERROR,
                     },
                     status=202,
                 )
@@ -91,14 +93,120 @@ def unique_path(path: Path) -> Path:
 
 
 def read_codex_rate_limits() -> dict | None:
-    codex = shutil.which("codex")
+    global LAST_RATE_LIMIT_ERROR
+    codex = find_codex_executable()
     if not codex:
+        LAST_RATE_LIMIT_ERROR = "codex executable was not found via PATH, Get-AppxPackage, or WindowsApps scan."
         return None
 
+    attempts = [
+        [codex, "app-server", "--stdio"],
+        [codex, "app-server", "--listen", "stdio://"],
+        [codex, "app-server"],
+        [codex, "-s", "read-only", "-a", "untrusted", "app-server"],
+    ]
+    errors = []
+    for command in attempts:
+        snapshot, error = read_codex_rate_limits_with_command(command)
+        if snapshot:
+            LAST_RATE_LIMIT_ERROR = ""
+            return snapshot
+        errors.append(error)
+    LAST_RATE_LIMIT_ERROR = " | ".join(error for error in errors if error)
+    return None
+
+
+def find_codex_executable() -> str | None:
+    local_cli = find_local_codex_cli()
+    if local_cli:
+        return str(local_cli)
+
+    from_path = shutil.which("codex")
+    if from_path:
+        path = Path(from_path)
+        exe_sibling = path.with_name(path.name + ".exe")
+        if path.suffix.lower() != ".exe" and exe_sibling.exists():
+            return str(exe_sibling)
+        return from_path
+
+    appx_location = find_codex_appx_location()
+    if appx_location:
+        for rel in ("app/resources/codex.exe", "codex.exe", "app/resources/codex", "codex"):
+            candidate = appx_location / rel
+            if candidate.exists():
+                return str(candidate)
+
+    roots = [
+        Path.home() / "AppData" / "Local" / "Microsoft" / "WindowsApps",
+        Path("C:/Program Files/WindowsApps"),
+    ]
+    candidates: list[Path] = []
+    for root in roots:
+        if not root.exists():
+            continue
+        try:
+            candidates.extend(root.glob("OpenAI.Codex_*/*/resources/codex.exe"))
+            candidates.extend(root.glob("OpenAI.Codex_*/app/resources/codex.exe"))
+            candidates.extend(root.glob("OpenAI.Codex_*/codex.exe"))
+            candidates.extend(root.glob("OpenAI.Codex_*/*/resources/codex"))
+            candidates.extend(root.glob("OpenAI.Codex_*/app/resources/codex"))
+            candidates.extend(root.glob("OpenAI.Codex_*/codex"))
+        except OSError:
+            continue
+
+    existing = [path for path in candidates if path.exists()]
+    if not existing:
+        return None
+    existing.sort(key=lambda path: (path.suffix.lower() != ".exe", -path.stat().st_mtime))
+    return str(existing[0])
+
+
+def find_local_codex_cli() -> Path | None:
+    root = Path.home() / "AppData" / "Local" / "OpenAI" / "Codex" / "bin"
+    if not root.exists():
+        return None
+    try:
+        candidates = list(root.glob("*/codex.exe"))
+    except OSError:
+        return None
+    existing = [path for path in candidates if path.exists()]
+    if not existing:
+        return None
+    existing.sort(key=lambda path: path.stat().st_mtime, reverse=True)
+    return existing[0]
+
+
+def find_codex_appx_location() -> Path | None:
+    try:
+        completed = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                "(Get-AppxPackage OpenAI.Codex | Select-Object -First 1 -ExpandProperty InstallLocation)",
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+    location = completed.stdout.strip().splitlines()
+    if completed.returncode != 0 or not location:
+        return None
+    path = Path(location[0].strip())
+    return path if path.exists() else None
+
+
+def read_codex_rate_limits_with_command(command: list[str]) -> tuple[dict | None, str]:
     proc: subprocess.Popen[str] | None = None
+    label = " ".join(command[1:]) or "codex"
     try:
         proc = subprocess.Popen(
-            [codex, "-s", "read-only", "-a", "untrusted", "app-server"],
+            command,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -126,7 +234,7 @@ def read_codex_rate_limits() -> dict | None:
             timeout=6,
         )
         if not initialized or "error" in initialized:
-            return None
+            return None, f"{label}: initialize failed {compact_message(initialized)}"
 
         write_rpc(proc, {"method": "initialized", "params": {}})
         account = rpc_request(
@@ -145,10 +253,12 @@ def read_codex_rate_limits() -> dict | None:
         )
         rate_limits = (limits or {}).get("result", {}).get("rateLimits")
         if not isinstance(rate_limits, dict):
-            return None
-        return normalize_rate_limits(rate_limits, account)
-    except (OSError, subprocess.SubprocessError, TimeoutError, BrokenPipeError):
-        return None
+            return None, f"{label}: rateLimits response missing {compact_message(limits)}"
+        return normalize_rate_limits(rate_limits, account), ""
+    except (OSError, subprocess.SubprocessError, TimeoutError, BrokenPipeError) as exc:
+        stderr = read_stderr(proc)
+        detail = f"{label}: {type(exc).__name__}: {exc}"
+        return None, f"{detail}; stderr={stderr}" if stderr else detail
     finally:
         if proc and proc.poll() is None:
             proc.terminate()
@@ -156,6 +266,24 @@ def read_codex_rate_limits() -> dict | None:
                 proc.wait(timeout=1)
             except subprocess.TimeoutExpired:
                 proc.kill()
+
+
+def read_stderr(proc: subprocess.Popen[str] | None) -> str:
+    if not proc or not proc.stderr:
+        return ""
+    if proc.poll() is None:
+        return ""
+    try:
+        return proc.stderr.read(1000).strip()
+    except Exception:
+        return ""
+
+
+def compact_message(message: object) -> str:
+    if message is None:
+        return "no response"
+    text = json.dumps(message, ensure_ascii=False)
+    return text[:500]
 
 
 def write_rpc(proc: subprocess.Popen[str], payload: dict) -> None:
@@ -211,7 +339,6 @@ def normalize_rate_limits(rate_limits: dict, account_response: dict | None) -> d
     return {
         "source": "codex-app-server",
         "planType": rate_limits.get("planType") or account.get("planType"),
-        "email": account.get("email"),
         "primary": normalize_window(rate_limits.get("primary")),
         "secondary": normalize_window(rate_limits.get("secondary")),
         "credits": credits,
