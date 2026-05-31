@@ -27,6 +27,16 @@ python server.py
 http://localhost:3000
 ```
 
+## 桌面悬浮窗
+
+最小桌面版可以直接运行：
+
+```powershell
+python desktop_pet.py
+```
+
+它会显示一个置顶小窗，读取 Codex 短期/长期灵脉，每 60 秒自动刷新。这个版本先验证桌宠工具形态，后续再把完整饕餮视觉和装扮系统迁进去。
+
 ## 当前 demo 包含
 
 - Q 版饕餮灵兽
