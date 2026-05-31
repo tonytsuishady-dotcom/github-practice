@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Codex 灵兽小筑</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="pet-stage" aria-label="灵兽状态">
+        <div class="top-strip">
+          <div>
+            <p class="eyebrow">Codex Spirit Companion</p>
+            <h1>灵兽小筑</h1>
+          </div>
+          <button class="icon-button" id="resetDemo" title="重置 demo 状态" aria-label="重置 demo 状态">↺</button>
+        </div>
+
+        <div class="scene">
+          <div class="halo"></div>
+          <div class="taotie" id="taotie" aria-label="Q 版饕餮">
+            <div class="horn horn-left"></div>
+            <div class="horn horn-right"></div>
+            <div class="ear ear-left"></div>
+            <div class="ear ear-right"></div>
+            <div class="face">
+              <div class="brow brow-left"></div>
+              <div class="brow brow-right"></div>
+              <div class="eye eye-left"></div>
+              <div class="eye eye-right"></div>
+              <div class="snout">
+                <span></span>
+                <span></span>
+              </div>
+              <div class="mouth">
+                <div class="tooth tooth-left"></div>
+                <div class="tooth tooth-right"></div>
+              </div>
+              <div class="mark mark-left"></div>
+              <div class="mark mark-right"></div>
+            </div>
+            <div class="belly">
+              <div class="sigil"></div>
+            </div>
+            <div class="paw paw-left"></div>
+            <div class="paw paw-right"></div>
+          </div>
+        </div>
+
+        <div class="speech" id="speech">开灵之后，我会帮你把灵气、灵材和成果都看住。</div>
+
+        <div class="drop-zone" id="dropZone">
+          <input id="fileInput" type="file" multiple />
+          <div class="drop-copy">
+            <strong>投喂灵材</strong>
+            <span>拖入截图、PDF、日志或文档，饕餮会生成一枚投喂玉简。</span>
+          </div>
+          <button class="primary-button" id="chooseFiles">选择文件</button>
+        </div>
+      </section>
+
+      <aside class="control-panel" aria-label="灵兽控制台">
+        <section class="panel-section">
+          <div class="section-heading">
+            <h2>开灵仪式</h2>
+            <span id="birthBadge">未开灵</span>
+          </div>
+          <div class="spirit-grid" id="spiritGrid"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-heading">
+            <h2>灵气余量</h2>
+            <span id="sourceBadge">Demo</span>
+          </div>
+          <div class="meter-block">
+            <div class="meter-row">
+              <span>短期灵脉</span>
+              <strong id="shortValue">91%</strong>
+            </div>
+            <div class="meter">
+              <div id="shortMeter" style="width: 91%"></div>
+            </div>
+            <small id="shortReset">约 02:17 后回转</small>
+          </div>
+          <div class="meter-block">
+            <div class="meter-row">
+              <span>长期灵脉</span>
+              <strong id="weekValue">98%</strong>
+            </div>
+            <div class="meter">
+              <div id="weekMeter" style="width: 98%"></div>
+            </div>
+            <small id="weekReset">6 月 5 日回转</small>
+          </div>
+          <div class="quick-actions">
+            <button id="consumeLight">轻量推演</button>
+            <button id="consumeHeavy">大阵推演</button>
+            <button id="markUseful">炼化成功</button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-heading">
+            <h2>修行状态</h2>
+            <span id="realm">炼气</span>
+          </div>
+          <div class="stat-list">
+            <div>
+              <span>饱腹值</span>
+              <strong id="fullness">62</strong>
+            </div>
+            <div>
+              <span>消化率</span>
+              <strong id="digestRate">72%</strong>
+            </div>
+            <div>
+              <span>投喂次数</span>
+              <strong id="feedCount">0</strong>
+            </div>
+            <div>
+              <span>玉简</span>
+              <strong id="scrollCount">0</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-section log-section">
+          <div class="section-heading">
+            <h2>投喂玉简</h2>
+            <button id="downloadLatest" disabled>下载最新</button>
+          </div>
+          <div class="feed-log" id="feedLog"></div>
+        </section>
+      </aside>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
