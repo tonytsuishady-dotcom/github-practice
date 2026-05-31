@@ -20,7 +20,8 @@ const defaultState = {
   source: "Demo",
   planType: "",
   shortResetLabel: "约 02:17 后回转",
-  weekResetLabel: "6 月 5 日回转"
+  weekResetLabel: "6 月 5 日回转",
+  lastSyncedAt: ""
 };
 
 let state = loadState();
@@ -44,6 +45,9 @@ const el = {
   taotie: document.querySelector("#taotie"),
   petShortValue: document.querySelector("#petShortValue"),
   petUsageText: document.querySelector("#petUsageText"),
+  petMood: document.querySelector("#petMood"),
+  refreshStatus: document.querySelector("#refreshStatus"),
+  statusRibbon: document.querySelector("#statusRibbon"),
   dropZone: document.querySelector("#dropZone"),
   fileInput: document.querySelector("#fileInput"),
   chooseFiles: document.querySelector("#chooseFiles"),
@@ -58,6 +62,7 @@ const el = {
 renderSpiritChoices();
 bindEvents();
 refreshRateLimits();
+setInterval(refreshRateLimits, 60000);
 render();
 
 function loadState() {
@@ -151,6 +156,7 @@ async function refreshRateLimits() {
     }
     state.source = "Codex";
     state.planType = data.planType || "";
+    state.lastSyncedAt = new Date().toISOString();
     if (data.rateLimitReachedType) {
       speak("灵脉触及限制，饕餮建议先消化已有成果。");
     }
@@ -293,7 +299,32 @@ function render() {
   el.taotie.classList.toggle("qi-low", state.shortRemaining < 25);
   el.taotie.classList.toggle("qi-mid", state.shortRemaining >= 25 && state.shortRemaining < 60);
   el.taotie.classList.toggle("qi-high", state.shortRemaining >= 60);
+  renderPetStatus();
   renderLog();
+}
+
+function renderPetStatus() {
+  el.statusRibbon.classList.remove("warning", "danger");
+  if (state.shortRemaining < 20) {
+    el.petMood.textContent = "短期灵脉告急，先收束任务";
+    el.statusRibbon.classList.add("danger");
+  } else if (state.shortRemaining < 45) {
+    el.petMood.textContent = "灵气偏紧，适合小步炼化";
+    el.statusRibbon.classList.add("warning");
+  } else if (state.shortRemaining > 80 && state.weekRemaining > 80) {
+    el.petMood.textContent = "灵脉充盈，可以开阵推演";
+  } else {
+    el.petMood.textContent = "灵脉平稳，适合继续修行";
+  }
+
+  if (state.source === "Codex" && state.lastSyncedAt) {
+    el.refreshStatus.textContent = `已同步 ${new Date(state.lastSyncedAt).toLocaleTimeString("zh-CN", {
+      hour: "2-digit",
+      minute: "2-digit"
+    })}`;
+  } else {
+    el.refreshStatus.textContent = "Demo 模式";
+  }
 }
 
 function renderLog() {
