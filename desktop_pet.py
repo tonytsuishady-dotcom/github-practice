@@ -39,6 +39,8 @@ class SpiritDesktopPet:
         self.root.attributes("-topmost", True)
         self.root.resizable(False, False)
         self.root.configure(bg="#f8f6ef")
+        self.root.bind("<KeyPress>", self.on_key_press)
+        self.root.bind("<Button-1>", self.on_root_click)
 
         self.drag_start: tuple[int, int] | None = None
         self.frame = 0
@@ -54,6 +56,8 @@ class SpiritDesktopPet:
         self.digest_progress = 0
         self.last_material = ""
         self.events: list[str] = []
+        self.tap_side = 0
+        self.key_taps = 0
 
         self._load_local_state()
         self._build_ui()
@@ -150,8 +154,9 @@ class SpiritDesktopPet:
 
         actions = tk.Frame(self.card, bg=PAPER)
         actions.pack(fill="x", padx=14, pady=(10, 6))
-        self._action_button(actions, "投喂灵材", self.feed_files).pack(side="left", expand=True, fill="x", padx=(0, 6))
-        self._action_button(actions, "炼化成功", self.mark_useful).pack(side="left", expand=True, fill="x", padx=(6, 0))
+        self._action_button(actions, "投喂", self.feed_files).pack(side="left", expand=True, fill="x", padx=(0, 4))
+        self._action_button(actions, "敲玉简", self.tap_jade_slip).pack(side="left", expand=True, fill="x", padx=4)
+        self._action_button(actions, "炼化", self.mark_useful).pack(side="left", expand=True, fill="x", padx=(4, 0))
 
         refine = tk.Frame(self.card, bg=PAPER)
         refine.pack(fill="x", padx=14, pady=(4, 6))
@@ -257,6 +262,14 @@ class SpiritDesktopPet:
         offset_x, offset_y = self.drag_start
         self.root.geometry(f"+{event.x_root - offset_x}+{event.y_root - offset_y}")
 
+    def on_root_click(self, _event: tk.Event) -> None:
+        self.root.focus_force()
+
+    def on_key_press(self, event: tk.Event) -> None:
+        if event.keysym in {"Escape", "Tab", "Shift_L", "Shift_R", "Control_L", "Control_R", "Alt_L", "Alt_R"}:
+            return
+        self.tap_jade_slip(from_key=True)
+
     def refresh(self) -> None:
         self.status.config(text="正在同步 Codex 灵脉...")
         threading.Thread(target=self._load_usage, daemon=True).start()
@@ -314,6 +327,17 @@ class SpiritDesktopPet:
         self.mode = "pet"
         self.mode_until = self.frame + 18
         self._say("饕餮蹭了蹭你：今日也要炼化成真正成果。", "摸摸灵兽，精神 +1。", GOOD)
+
+    def tap_jade_slip(self, from_key: bool = False) -> None:
+        self.tap_side = 1 - self.tap_side
+        self.key_taps += 1
+        self.mode = "tap-left" if self.tap_side == 0 else "tap-right"
+        self.mode_until = self.frame + 8
+        source = "键盘输入" if from_key else "敲玉简"
+        if self.key_taps % 12 == 0:
+            self.digest_progress = min(99, self.digest_progress + 6)
+        self._say("哒。哒。饕餮帮你敲着玉简。", f"{source}驱动动作 · {self.key_taps} 次", GOOD)
+        self._update_refine_ui()
 
     def feed_files(self) -> None:
         self._say("张嘴等灵材中。文件只会在本地生成玉简。", "正在打开文件选择框。", GOOD)
@@ -417,13 +441,16 @@ class SpiritDesktopPet:
         elif self.mode == "shine" and self.frame % 3 == 0:
             self.digest_progress = max(0, self.digest_progress - 2)
             self._update_refine_ui()
+        elif self.mode.startswith("tap") and self.frame % 2 == 0:
+            self.digest_progress = min(99, self.digest_progress + 1)
+            self._update_refine_ui()
         self._draw_pet()
         self.root.after(FRAME_MS, self._tick)
 
     def _draw_pet(self) -> None:
         self.canvas.delete("all")
         stage = self.stage()
-        bob = 0 if self.mode == "eat" else (self.frame % 12 > 5) * -4
+        bob = 0 if self.mode in {"eat", "tap-left", "tap-right"} else (self.frame % 12 > 5) * -4
         if self.mode == "pet":
             bob -= 8
         x = 180
@@ -487,8 +514,10 @@ class SpiritDesktopPet:
 
         self._px(left - size, top + size * 2, size, size * 2, INK)
         self._px(left + body_w, top + size * 2, size, size * 2, INK)
-        self._px(left - size + 4, top + size * 2 + 4, size - 4, size * 2 - 8, JADE_DARK)
-        self._px(left + body_w, top + size * 2 + 4, size - 4, size * 2 - 8, JADE_DARK)
+        left_arm_drop = 12 if self.mode == "tap-left" else 0
+        right_arm_drop = 12 if self.mode == "tap-right" else 0
+        self._px(left - size + 4, top + size * 2 + 4 + left_arm_drop, size - 4, size * 2 - 8, JADE_DARK)
+        self._px(left + body_w, top + size * 2 + 4 + right_arm_drop, size - 4, size * 2 - 8, JADE_DARK)
         self._px(left - size + 6, top + size * 2 + 6, size - 8, size - 8, "#d79074")
         self._px(left + body_w + 2, top + size * 2 + 6, size - 8, size - 8, "#d79074")
 
@@ -542,6 +571,12 @@ class SpiritDesktopPet:
             item_y = top - 36 + (self.frame % 8) * 5
             self._px(x - 8, item_y, 16, 18, GOLD)
             self._px(x - 4, item_y + 4, 8, 8, "#ffffff")
+        elif self.mode.startswith("tap"):
+            self._px(x - size * 2, top + size * 6 + 8, size * 4, size // 2, INK)
+            self._px(x - size * 2 + 4, top + size * 6 + 12, size * 4 - 8, size // 2 - 4, "#fff7dc")
+            hit_x = left - size // 2 if self.mode == "tap-left" else left + body_w - size // 2
+            self._px(hit_x, top + size * 6, size, 6, GOLD)
+            self._px(hit_x + size // 2, top + size * 6 - 8, 6, 8, CYAN)
         elif self.short_remaining < 20:
             self._px(left + size * 2, top + size * 2, size, 5, INK)
             self._px(left + size * 4, top + size * 2, size, 5, INK)
