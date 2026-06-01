@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import ctypes
 import json
 import re
 import threading
+import time
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
@@ -29,6 +31,9 @@ CYAN = "#6eddd7"
 GOOD = "#1f8a70"
 WARN = "#c9852e"
 DANGER = "#c95757"
+KEY_CODES = list(range(0x30, 0x5B)) + [0x08, 0x09, 0x0D, 0x20, 0x25, 0x26, 0x27, 0x28]
+MOUSE_CODES = [0x01, 0x02]
+GLOBAL_INPUT_CODES = KEY_CODES + MOUSE_CODES
 
 
 class SpiritDesktopPet:
@@ -58,6 +63,10 @@ class SpiritDesktopPet:
         self.events: list[str] = []
         self.tap_side = 0
         self.key_taps = 0
+        self.global_sensing = False
+        self.global_thread_started = False
+        self.global_down: set[int] = set()
+        self.last_global_input_at = 0.0
 
         self._load_local_state()
         self._build_ui()
@@ -157,6 +166,9 @@ class SpiritDesktopPet:
         self._action_button(actions, "投喂", self.feed_files).pack(side="left", expand=True, fill="x", padx=(0, 4))
         self._action_button(actions, "敲玉简", self.tap_jade_slip).pack(side="left", expand=True, fill="x", padx=4)
         self._action_button(actions, "炼化", self.mark_useful).pack(side="left", expand=True, fill="x", padx=(4, 0))
+
+        self.sense_button = self._action_button(self.card, "开启全局输入感应", self.toggle_global_sensing)
+        self.sense_button.pack(fill="x", padx=14, pady=(0, 6))
 
         refine = tk.Frame(self.card, bg=PAPER)
         refine.pack(fill="x", padx=14, pady=(4, 6))
@@ -270,6 +282,42 @@ class SpiritDesktopPet:
             return
         self.tap_jade_slip(from_key=True)
 
+    def toggle_global_sensing(self) -> None:
+        self.global_sensing = not self.global_sensing
+        if self.global_sensing and not self.global_thread_started:
+            self.global_thread_started = True
+            threading.Thread(target=self._global_input_loop, daemon=True).start()
+        if self.global_sensing:
+            self.sense_button.config(text="关闭全局输入感应")
+            self._say("我开始听电脑的动静了，只感应输入发生，不记录内容。", "全局输入感应开启。", GOOD)
+        else:
+            self.sense_button.config(text="开启全局输入感应")
+            self.global_down.clear()
+            self._say("我收回耳朵了。现在只响应窗口内互动。", "全局输入感应关闭。", WARN)
+
+    def _global_input_loop(self) -> None:
+        try:
+            user32 = ctypes.windll.user32
+        except AttributeError:
+            self.root.after(0, lambda: self._say("这套感应只支持 Windows。", "全局输入感应不可用。", DANGER))
+            return
+
+        while True:
+            if not self.global_sensing:
+                time.sleep(0.12)
+                continue
+
+            pressed = {code for code in GLOBAL_INPUT_CODES if user32.GetAsyncKeyState(code) & 0x8000}
+            newly_pressed = pressed - self.global_down
+            self.global_down = pressed
+            if newly_pressed:
+                now = time.monotonic()
+                if now - self.last_global_input_at > 0.08:
+                    self.last_global_input_at = now
+                    source = "鼠标" if any(code in MOUSE_CODES for code in newly_pressed) else "键盘"
+                    self.root.after(0, lambda source=source: self.tap_jade_slip(from_global=True, source=source))
+            time.sleep(0.035)
+
     def refresh(self) -> None:
         self.status.config(text="正在同步 Codex 灵脉...")
         threading.Thread(target=self._load_usage, daemon=True).start()
@@ -328,15 +376,18 @@ class SpiritDesktopPet:
         self.mode_until = self.frame + 18
         self._say("饕餮蹭了蹭你：今日也要炼化成真正成果。", "摸摸灵兽，精神 +1。", GOOD)
 
-    def tap_jade_slip(self, from_key: bool = False) -> None:
+    def tap_jade_slip(self, from_key: bool = False, from_global: bool = False, source: str = "键盘") -> None:
         self.tap_side = 1 - self.tap_side
         self.key_taps += 1
         self.mode = "tap-left" if self.tap_side == 0 else "tap-right"
         self.mode_until = self.frame + 8
-        source = "键盘输入" if from_key else "敲玉简"
+        action_source = f"全局{source}" if from_global else ("键盘输入" if from_key else "敲玉简")
         if self.key_taps % 12 == 0:
             self.digest_progress = min(99, self.digest_progress + 6)
-        self._say("哒。哒。饕餮帮你敲着玉简。", f"{source}驱动动作 · {self.key_taps} 次", GOOD)
+        self.bubble.config(text="哒。哒。饕餮帮你敲着玉简。")
+        self.status.config(text=f"{action_source}驱动动作 · {self.key_taps} 次", fg=GOOD)
+        if not from_global or self.key_taps % 8 == 1:
+            self._append_event(f"{action_source}驱动动作 · {self.key_taps} 次")
         self._update_refine_ui()
 
     def feed_files(self) -> None:
