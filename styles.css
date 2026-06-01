@@ -654,6 +654,34 @@ small {
   font-size: 22px;
 }
 
+.guard-list {
+  display: grid;
+  gap: 8px;
+}
+
+.guard-list div {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  background: #fffaf2;
+}
+
+.guard-list div.done {
+  border-color: rgba(31, 138, 112, 0.42);
+  background: rgba(31, 138, 112, 0.08);
+}
+
+.guard-list strong {
+  font-size: 13px;
+}
+
+.guard-list span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .log-section {
   min-height: 206px;
 }

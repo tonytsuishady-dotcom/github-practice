@@ -14,6 +14,7 @@ const defaultState = {
   weekRemaining: 98,
   fullness: 62,
   digestRate: 72,
+  usefulCount: 0,
   feedCount: 0,
   scrolls: [],
   realm: "炼气",
@@ -41,6 +42,10 @@ const el = {
   feedCount: document.querySelector("#feedCount"),
   scrollCount: document.querySelector("#scrollCount"),
   realm: document.querySelector("#realm"),
+  v1Score: document.querySelector("#v1Score"),
+  v1Stage: document.querySelector("#v1Stage"),
+  v1Meter: document.querySelector("#v1Meter"),
+  guardList: document.querySelector("#guardList"),
   speech: document.querySelector("#speech"),
   taotie: document.querySelector("#taotie"),
   petShortValue: document.querySelector("#petShortValue"),
@@ -257,6 +262,7 @@ function consumeQi(amount, message) {
 }
 
 function markUseful() {
+  state.usefulCount += 1;
   state.digestRate = clamp(state.digestRate + 10, 0, 100);
   state.fullness = clamp(state.fullness + 5, 0, 100);
   speak("炼化成功，灵气转为修为。不是烧得多，是用得准。");
@@ -300,7 +306,50 @@ function render() {
   el.taotie.classList.toggle("qi-mid", state.shortRemaining >= 25 && state.shortRemaining < 60);
   el.taotie.classList.toggle("qi-high", state.shortRemaining >= 60);
   renderPetStatus();
+  renderV1Loop();
   renderLog();
+}
+
+function renderV1Loop() {
+  const savedScrolls = state.scrolls.filter((scroll) => scroll.savedPath).length;
+  const checks = [
+    {
+      label: "真实灵脉同步",
+      done: state.source === "Codex",
+      hint: state.source === "Codex" ? "已读取 Codex 用量" : "当前为 Demo 模式"
+    },
+    {
+      label: "灵材投喂",
+      done: state.feedCount > 0,
+      hint: state.feedCount > 0 ? `已投喂 ${state.feedCount} 次` : "拖入文件开始"
+    },
+    {
+      label: "有效炼化",
+      done: state.usefulCount > 0 || state.digestRate >= 82,
+      hint: state.usefulCount > 0 ? `确认有效 ${state.usefulCount} 次` : "点击炼化成功"
+    },
+    {
+      label: "玉简入洞府",
+      done: savedScrolls > 0,
+      hint: savedScrolls > 0 ? `已本地保存 ${savedScrolls} 枚` : "需通过本地服务保存"
+    }
+  ];
+  const score = checks.filter((item) => item.done).length * 25;
+  const next = checks.find((item) => !item.done);
+
+  el.v1Score.textContent = `${score}%`;
+  el.v1Meter.style.width = `${score}%`;
+  el.v1Stage.textContent = next ? `下一步：${next.label}` : "第一代闭环已打通";
+  el.guardList.innerHTML = checks
+    .map(
+      (item) => `
+        <div class="${item.done ? "done" : ""}">
+          <strong>${item.done ? "✓" : "○"} ${item.label}</strong>
+          <span>${item.hint}</span>
+        </div>
+      `
+    )
+    .join("");
 }
 
 function renderPetStatus() {
