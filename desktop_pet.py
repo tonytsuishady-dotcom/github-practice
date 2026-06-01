@@ -6,7 +6,7 @@ import threading
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
-from tkinter import filedialog, ttk
+from tkinter import filedialog
 from typing import Callable
 
 from codex_usage import get_last_error, read_codex_rate_limits
@@ -21,6 +21,7 @@ FRAME_MS = 140
 INK = "#203d3a"
 JADE = "#3aa0a0"
 JADE_DARK = "#2c7f88"
+PAPER = "#fff8e7"
 CREAM = "#f7e7bd"
 GOLD = "#c8b983"
 CORAL = "#dd786f"
@@ -34,7 +35,7 @@ class SpiritDesktopPet:
     def __init__(self) -> None:
         self.root = tk.Tk()
         self.root.title("Codex 灵兽桌宠")
-        self.root.geometry("430x640+80+80")
+        self.root.geometry("450x700+80+80")
         self.root.attributes("-topmost", True)
         self.root.resizable(False, False)
         self.root.configure(bg="#f8f6ef")
@@ -61,20 +62,40 @@ class SpiritDesktopPet:
         self._tick()
 
     def _build_ui(self) -> None:
-        self.card = tk.Frame(self.root, bg="#fffaf0", highlightbackground=INK, highlightthickness=2)
+        self.card = tk.Frame(self.root, bg=PAPER, highlightbackground=INK, highlightthickness=2)
         self.card.pack(fill="both", expand=True, padx=10, pady=10)
 
-        header = tk.Frame(self.card, bg="#fffaf0")
-        header.pack(fill="x", padx=12, pady=(10, 4))
+        header = tk.Frame(self.card, bg=PAPER)
+        header.pack(fill="x", padx=14, pady=(12, 4))
 
+        title_stack = tk.Frame(header, bg=PAPER)
+        title_stack.pack(side="left", fill="x", expand=True)
+        tk.Label(
+            title_stack,
+            text="CODEX SPIRIT COMPANION",
+            bg=PAPER,
+            fg=GOOD,
+            font=("Microsoft YaHei UI", 8, "bold"),
+        ).pack(anchor="w")
         self.title = tk.Label(
-            header,
+            title_stack,
             text="饕餮灵脉",
-            bg="#fffaf0",
+            bg=PAPER,
             fg=INK,
-            font=("Microsoft YaHei UI", 16, "bold"),
+            font=("Microsoft YaHei UI", 18, "bold"),
         )
-        self.title.pack(side="left")
+        self.title.pack(anchor="w")
+
+        self.stage_badge = tk.Label(
+            header,
+            text="幼体",
+            bg="#e8f3ef",
+            fg=INK,
+            font=("Microsoft YaHei UI", 9, "bold"),
+            padx=10,
+            pady=5,
+        )
+        self.stage_badge.pack(side="right", padx=(0, 8))
 
         self._icon_button(header, "×", self.root.destroy).pack(side="right", padx=(4, 0))
         self._icon_button(header, "↻", self.refresh).pack(side="right")
@@ -82,15 +103,23 @@ class SpiritDesktopPet:
         self.plan = tk.Label(
             self.card,
             text="正在同步 Codex 灵脉...",
-            bg="#fffaf0",
+            bg="#fff1cc",
             fg="#65707f",
             font=("Microsoft YaHei UI", 9),
+            padx=10,
+            pady=5,
         )
-        self.plan.pack(anchor="w", padx=12)
+        self.plan.pack(fill="x", padx=14, pady=(2, 8))
 
-        self.canvas = tk.Canvas(self.card, width=360, height=330, bg="#fffaf0", highlightthickness=0)
+        self.canvas = tk.Canvas(self.card, width=390, height=340, bg=PAPER, highlightthickness=0)
         self.canvas.pack(pady=(2, 0))
         self.canvas.bind("<Button-1>", self.pet)
+
+        stats = tk.Frame(self.card, bg=PAPER)
+        stats.pack(fill="x", padx=14, pady=(0, 8))
+        self.stage_chip = self._stat_chip(stats, "境界", "幼体")
+        self.scroll_chip = self._stat_chip(stats, "玉简", "0")
+        self.digest_chip = self._stat_chip(stats, "炼化", "0%")
 
         self.bubble = tk.Label(
             self.card,
@@ -103,45 +132,45 @@ class SpiritDesktopPet:
             padx=10,
             pady=8,
         )
-        self.bubble.pack(fill="x", padx=12, pady=(0, 8))
+        self.bubble.pack(fill="x", padx=14, pady=(0, 8))
 
         self.status = tk.Label(
             self.card,
             text="点击灵兽可以互动，投喂文件会生成本地玉简。",
-            bg="#fffaf0",
+            bg=PAPER,
             fg="#65707f",
             font=("Microsoft YaHei UI", 9),
-            wraplength=328,
+            wraplength=360,
             justify="left",
         )
-        self.status.pack(fill="x", padx=12, pady=(0, 8))
+        self.status.pack(fill="x", padx=14, pady=(0, 8))
 
         self.short = self._meter("短期灵脉")
         self.week = self._meter("长期灵脉")
 
-        actions = tk.Frame(self.card, bg="#fffaf0")
-        actions.pack(fill="x", padx=12, pady=(10, 6))
+        actions = tk.Frame(self.card, bg=PAPER)
+        actions.pack(fill="x", padx=14, pady=(10, 6))
         self._action_button(actions, "投喂灵材", self.feed_files).pack(side="left", expand=True, fill="x", padx=(0, 6))
         self._action_button(actions, "炼化成功", self.mark_useful).pack(side="left", expand=True, fill="x", padx=(6, 0))
 
-        refine = tk.Frame(self.card, bg="#fffaf0")
-        refine.pack(fill="x", padx=12, pady=(4, 6))
-        refine_top = tk.Frame(refine, bg="#fffaf0")
+        refine = tk.Frame(self.card, bg=PAPER)
+        refine.pack(fill="x", padx=14, pady=(4, 6))
+        refine_top = tk.Frame(refine, bg=PAPER)
         refine_top.pack(fill="x")
-        tk.Label(refine_top, text="炼化炉", bg="#fffaf0", fg=INK, font=("Microsoft YaHei UI", 9, "bold")).pack(side="left")
-        self.refine_value = tk.Label(refine_top, text="0%", bg="#fffaf0", fg=INK, font=("Microsoft YaHei UI", 9, "bold"))
+        tk.Label(refine_top, text="炼化炉", bg=PAPER, fg=INK, font=("Microsoft YaHei UI", 9, "bold")).pack(side="left")
+        self.refine_value = tk.Label(refine_top, text="0%", bg=PAPER, fg=INK, font=("Microsoft YaHei UI", 9, "bold"))
         self.refine_value.pack(side="right")
-        self.refine_bar = ttk.Progressbar(refine, maximum=100, mode="determinate")
-        self.refine_bar.pack(fill="x", pady=(3, 0))
+        self.refine_bar = self._pixel_bar(refine, GOLD)
+        self.refine_bar["canvas"].pack(fill="x", pady=(3, 0))
 
         self.progress = tk.Label(
             self.card,
             text="一代闭环：等待灵脉同步",
-            bg="#fffaf0",
+            bg=PAPER,
             fg=INK,
             font=("Microsoft YaHei UI", 9, "bold"),
         )
-        self.progress.pack(fill="x", padx=12, pady=(2, 10))
+        self.progress.pack(fill="x", padx=14, pady=(2, 10))
 
         self.log = tk.Label(
             self.card,
@@ -154,7 +183,7 @@ class SpiritDesktopPet:
             padx=10,
             pady=8,
         )
-        self.log.pack(fill="x", padx=12, pady=(0, 10))
+        self.log.pack(fill="x", padx=14, pady=(0, 10))
 
     def _icon_button(self, parent: tk.Widget, text: str, command: Callable[[], object]) -> tk.Button:
         return tk.Button(
@@ -185,19 +214,33 @@ class SpiritDesktopPet:
             height=2,
         )
 
-    def _meter(self, label: str) -> dict[str, tk.Widget]:
-        frame = tk.Frame(self.card, bg="#fffaf0")
-        frame.pack(fill="x", padx=12, pady=(6, 0))
+    def _stat_chip(self, parent: tk.Widget, label: str, value: str) -> tk.Label:
+        frame = tk.Frame(parent, bg="#fff7dc", highlightbackground="#eadfca", highlightthickness=1)
+        frame.pack(side="left", expand=True, fill="x", padx=3)
+        tk.Label(frame, text=label, bg="#fff7dc", fg="#65707f", font=("Microsoft YaHei UI", 8)).pack(anchor="w", padx=8, pady=(5, 0))
+        value_label = tk.Label(frame, text=value, bg="#fff7dc", fg=INK, font=("Microsoft YaHei UI", 11, "bold"))
+        value_label.pack(anchor="w", padx=8, pady=(0, 5))
+        return value_label
 
-        top = tk.Frame(frame, bg="#fffaf0")
+    def _pixel_bar(self, parent: tk.Widget, color: str) -> dict[str, tk.Widget | int | str]:
+        canvas = tk.Canvas(parent, height=14, bg=PAPER, highlightthickness=0)
+        border = canvas.create_rectangle(0, 1, 10, 13, outline=INK, width=2, fill="#fff7dc")
+        fill = canvas.create_rectangle(3, 4, 3, 10, outline="", fill=color)
+        return {"canvas": canvas, "border": border, "fill": fill, "color": color}
+
+    def _meter(self, label: str) -> dict[str, tk.Widget]:
+        frame = tk.Frame(self.card, bg=PAPER)
+        frame.pack(fill="x", padx=14, pady=(6, 0))
+
+        top = tk.Frame(frame, bg=PAPER)
         top.pack(fill="x")
-        name = tk.Label(top, text=label, bg="#fffaf0", fg=INK, font=("Microsoft YaHei UI", 9, "bold"))
+        name = tk.Label(top, text=label, bg=PAPER, fg=INK, font=("Microsoft YaHei UI", 9, "bold"))
         name.pack(side="left")
-        value = tk.Label(top, text="--%", bg="#fffaf0", fg=INK, font=("Microsoft YaHei UI", 9, "bold"))
+        value = tk.Label(top, text="--%", bg=PAPER, fg=INK, font=("Microsoft YaHei UI", 9, "bold"))
         value.pack(side="right")
 
-        bar = ttk.Progressbar(frame, maximum=100, mode="determinate")
-        bar.pack(fill="x", pady=(3, 0))
+        bar = self._pixel_bar(frame, GOOD)
+        bar["canvas"].pack(fill="x", pady=(3, 0))
         return {"value": value, "bar": bar}
 
     def _bind_drag(self) -> None:
@@ -253,7 +296,19 @@ class SpiritDesktopPet:
     def _set_meter(self, meter: dict[str, tk.Widget], value: int) -> None:
         value = max(0, min(100, value))
         meter["value"].config(text=f"{value}%")
-        meter["bar"].config(value=value)
+        color = self._usage_color(value)
+        self._set_pixel_bar(meter["bar"], value, color)
+
+    def _set_pixel_bar(self, bar: dict[str, tk.Widget | int | str], value: int, color: str | None = None) -> None:
+        canvas = bar["canvas"]
+        if not isinstance(canvas, tk.Canvas):
+            return
+        canvas.update_idletasks()
+        width = max(80, canvas.winfo_width())
+        fill_width = max(3, int((width - 6) * max(0, min(100, value)) / 100))
+        canvas.coords(bar["border"], 0, 1, width - 1, 13)
+        canvas.coords(bar["fill"], 3, 4, fill_width, 10)
+        canvas.itemconfig(bar["fill"], fill=color or str(bar["color"]))
 
     def pet(self, _event: tk.Event | None = None) -> None:
         self.mode = "pet"
@@ -382,8 +437,24 @@ class SpiritDesktopPet:
         spirit_color = self._usage_color(self.short_remaining)
         belly = self._blend(CREAM, spirit_color, self.week_remaining / 100)
 
-        self.canvas.create_rectangle(18, 18, 342, 300, fill="#fff6df", outline="#eadfca")
-        self.canvas.create_rectangle(28, 28, 332, 290, fill="#fffaf0", outline="")
+        self.canvas.create_rectangle(12, 14, 348, 314, fill="#eadfca", outline="")
+        self.canvas.create_rectangle(18, 18, 342, 308, fill="#fff6df", outline="")
+        self.canvas.create_rectangle(28, 28, 332, 268, fill="#fffaf0", outline="")
+        self.canvas.create_rectangle(28, 268, 332, 290, fill="#efe1c4", outline="")
+        for tile_x in range(34, 330, 28):
+            self.canvas.create_line(tile_x, 268, tile_x - 10, 290, fill="#dfcfad")
+        for tile_y in (52, 92, 132, 172, 212):
+            self.canvas.create_line(34, tile_y, 326, tile_y, fill="#f3ecd9")
+        for tile_x in (42, 86, 130, 174, 218, 262, 306):
+            self.canvas.create_line(tile_x, 34, tile_x, 258, fill="#f3ecd9")
+        self._px(20, 20, 18, 6, GOLD)
+        self._px(20, 20, 6, 18, GOLD)
+        self._px(322, 20, 18, 6, GOLD)
+        self._px(334, 20, 6, 18, GOLD)
+        self._px(20, 288, 6, 18, GOLD)
+        self._px(20, 300, 18, 6, GOLD)
+        self._px(322, 300, 18, 6, GOLD)
+        self._px(334, 288, 6, 18, GOLD)
 
         aura_active = stage >= 3 or self.mode in {"eat", "shine", "pet"}
         if aura_active:
@@ -443,6 +514,14 @@ class SpiritDesktopPet:
         self._px(left + size * 2, top + size, size, size // 2, "#f2dda4")
         self._px(left + size * 4, top + size, size, size // 2, "#f2dda4")
         self._px(left + size * 3, top + size * 2 - 4, size, 5, "#26746f")
+        self._px(left + size + 5, top + size + 5, size, 5, "#6bc2b8")
+        self._px(left + size * 5 - 5, top + size + 8, 5, size, "#2c8f87")
+        if stage >= 2:
+            self._px(left + size, top + size * 3, size // 2, size // 2, "#f2dda4")
+            self._px(left + size * 5, top + size * 3, size // 2, size // 2, "#f2dda4")
+        if stage >= 4:
+            self._px(left + size * 5, top + size * 4, size // 2, size // 2, CYAN)
+            self._px(left + size, top + size * 4, size // 2, size // 2, CYAN)
 
         self._px(left + size * 2, top + size * 4, size * 3, size * 2, INK)
         self._px(left + size * 2 + 4, top + size * 4 + 4, size * 3 - 8, size * 2 - 4, belly)
@@ -488,6 +567,8 @@ class SpiritDesktopPet:
         self._px(left + size * 4, top + body_h, size * 2, size, INK)
         self._px(left + size + 4, top + body_h + 4, size * 2 - 8, size - 4, JADE_DARK)
         self._px(left + size * 4 + 4, top + body_h + 4, size * 2 - 8, size - 4, JADE_DARK)
+        for claw_x in (left + size + 8, left + size * 2, left + size * 4 + 8, left + size * 5):
+            self._px(claw_x, top + body_h + size - 5, 6, 4, CREAM)
 
         self.canvas.create_text(x, 304, text=f"{self.stage_name()} · 玉简 {self.scroll_count}", fill=INK, font=("Microsoft YaHei UI", 10, "bold"))
 
@@ -508,11 +589,16 @@ class SpiritDesktopPet:
         next_steps = ["同步灵脉", "投喂灵材", "确认炼化", "玉简入洞府"]
         next_step = next((next_steps[index] for index, done in enumerate(checks) if not done), "闭环已通")
         self.progress.config(text=f"一代闭环 {score}% · 下一步：{next_step}")
+        stage = self.stage_name()
+        self.stage_badge.config(text=stage)
+        self.stage_chip.config(text=stage)
+        self.scroll_chip.config(text=str(self.scroll_count))
 
     def _update_refine_ui(self) -> None:
         self.digest_progress = max(0, min(100, self.digest_progress))
         self.refine_value.config(text=f"{self.digest_progress}%")
-        self.refine_bar.config(value=self.digest_progress)
+        self._set_pixel_bar(self.refine_bar, self.digest_progress, CYAN if self.digest_progress >= 100 else GOLD)
+        self.digest_chip.config(text=f"{self.digest_progress}%")
 
     def _say(self, speech: str, event: str, color: str = GOOD) -> None:
         self.bubble.config(text=speech)
