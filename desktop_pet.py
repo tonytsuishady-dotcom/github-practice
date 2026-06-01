@@ -34,7 +34,7 @@ class SpiritDesktopPet:
     def __init__(self) -> None:
         self.root = tk.Tk()
         self.root.title("Codex 灵兽桌宠")
-        self.root.geometry("380x480+80+80")
+        self.root.geometry("430x640+80+80")
         self.root.attributes("-topmost", True)
         self.root.resizable(False, False)
         self.root.configure(bg="#f8f6ef")
@@ -50,6 +50,9 @@ class SpiritDesktopPet:
         self.useful_count = 0
         self.scroll_count = 0
         self.last_reset_label = ""
+        self.digest_progress = 0
+        self.last_material = ""
+        self.events: list[str] = []
 
         self._load_local_state()
         self._build_ui()
@@ -85,9 +88,22 @@ class SpiritDesktopPet:
         )
         self.plan.pack(anchor="w", padx=12)
 
-        self.canvas = tk.Canvas(self.card, width=300, height=238, bg="#fffaf0", highlightthickness=0)
+        self.canvas = tk.Canvas(self.card, width=360, height=330, bg="#fffaf0", highlightthickness=0)
         self.canvas.pack(pady=(2, 0))
         self.canvas.bind("<Button-1>", self.pet)
+
+        self.bubble = tk.Label(
+            self.card,
+            text="我能吞灵材，也要帮你炼成真正成果。",
+            bg="#e8f3ef",
+            fg=INK,
+            font=("Microsoft YaHei UI", 9, "bold"),
+            wraplength=340,
+            justify="left",
+            padx=10,
+            pady=8,
+        )
+        self.bubble.pack(fill="x", padx=12, pady=(0, 8))
 
         self.status = tk.Label(
             self.card,
@@ -108,6 +124,16 @@ class SpiritDesktopPet:
         self._action_button(actions, "投喂灵材", self.feed_files).pack(side="left", expand=True, fill="x", padx=(0, 6))
         self._action_button(actions, "炼化成功", self.mark_useful).pack(side="left", expand=True, fill="x", padx=(6, 0))
 
+        refine = tk.Frame(self.card, bg="#fffaf0")
+        refine.pack(fill="x", padx=12, pady=(4, 6))
+        refine_top = tk.Frame(refine, bg="#fffaf0")
+        refine_top.pack(fill="x")
+        tk.Label(refine_top, text="炼化炉", bg="#fffaf0", fg=INK, font=("Microsoft YaHei UI", 9, "bold")).pack(side="left")
+        self.refine_value = tk.Label(refine_top, text="0%", bg="#fffaf0", fg=INK, font=("Microsoft YaHei UI", 9, "bold"))
+        self.refine_value.pack(side="right")
+        self.refine_bar = ttk.Progressbar(refine, maximum=100, mode="determinate")
+        self.refine_bar.pack(fill="x", pady=(3, 0))
+
         self.progress = tk.Label(
             self.card,
             text="一代闭环：等待灵脉同步",
@@ -116,6 +142,19 @@ class SpiritDesktopPet:
             font=("Microsoft YaHei UI", 9, "bold"),
         )
         self.progress.pack(fill="x", padx=12, pady=(2, 10))
+
+        self.log = tk.Label(
+            self.card,
+            text="灵兽日志：等待第一份灵材。",
+            bg="#fff7dc",
+            fg="#65707f",
+            font=("Microsoft YaHei UI", 8),
+            wraplength=340,
+            justify="left",
+            padx=10,
+            pady=8,
+        )
+        self.log.pack(fill="x", padx=12, pady=(0, 10))
 
     def _icon_button(self, parent: tk.Widget, text: str, command: Callable[[], object]) -> tk.Button:
         return tk.Button(
@@ -162,7 +201,7 @@ class SpiritDesktopPet:
         return {"value": value, "bar": bar}
 
     def _bind_drag(self) -> None:
-        for widget in (self.root, self.card, self.title, self.plan, self.status, self.progress):
+        for widget in (self.root, self.card, self.title, self.plan, self.status, self.progress, self.bubble, self.log):
             widget.bind("<ButtonPress-1>", self._start_drag)
             widget.bind("<B1-Motion>", self._drag)
 
@@ -219,35 +258,54 @@ class SpiritDesktopPet:
     def pet(self, _event: tk.Event | None = None) -> None:
         self.mode = "pet"
         self.mode_until = self.frame + 18
-        self.status.config(text="饕餮蹭了蹭你：今日也要炼化成真正成果。", fg=GOOD)
+        self._say("饕餮蹭了蹭你：今日也要炼化成真正成果。", "摸摸灵兽，精神 +1。", GOOD)
 
     def feed_files(self) -> None:
-        paths = filedialog.askopenfilenames(title="选择要投喂的灵材")
+        self._say("张嘴等灵材中。文件只会在本地生成玉简。", "正在打开文件选择框。", GOOD)
+        self.root.attributes("-topmost", False)
+        self.root.update_idletasks()
+        paths = filedialog.askopenfilenames(parent=self.root, title="选择要投喂的灵材")
+        self.root.attributes("-topmost", True)
+        self.root.lift()
         if not paths:
+            self._say("没选到灵材。再投一次也可以。", "投喂取消。", WARN)
             return
+        self._feed_paths([Path(raw_path) for raw_path in paths])
+
+    def _feed_paths(self, paths: list[Path]) -> None:
         INBOX.mkdir(exist_ok=True)
         saved = 0
-        for raw_path in paths:
-            path = Path(raw_path)
+        names = []
+        for path in paths:
             markdown = self._make_scroll(path)
             target = self._unique_scroll_path(path.name)
             target.write_text(markdown, encoding="utf-8")
             saved += 1
+            names.append(path.name)
         self.feed_count += saved
         self.scroll_count += saved
+        self.digest_progress = min(95, self.digest_progress + 34 + saved * 8)
+        self.last_material = names[0] if names else ""
         self.mode = "eat"
-        self.mode_until = self.frame + 26
-        self.status.config(text=f"收下 {saved} 份灵材，已炼成玉简存入 pet-inbox。", fg=GOOD)
+        self.mode_until = self.frame + 34
+        self._say(
+            f"咔嚓！收下 {saved} 份灵材，正在炼化成玉简。",
+            f"投喂：{', '.join(names[:2])}{' 等' if len(names) > 2 else ''}",
+            GOOD,
+        )
         self._save_local_state()
         self._render_progress()
+        self._update_refine_ui()
 
     def mark_useful(self) -> None:
         self.useful_count += 1
+        self.digest_progress = 100
         self.mode = "shine"
-        self.mode_until = self.frame + 24
-        self.status.config(text="炼化成功。修为来自有效成果，不来自无意义消耗。", fg=GOOD)
+        self.mode_until = self.frame + 42
+        self._say("炼化完成！这次消耗转成了修为。", "有效成果 +1，灵兽发光。", GOOD)
         self._save_local_state()
         self._render_progress()
+        self._update_refine_ui()
 
     def _make_scroll(self, path: Path) -> str:
         now = datetime.now()
@@ -298,18 +356,24 @@ class SpiritDesktopPet:
         self.frame += 1
         if self.mode != "idle" and self.frame > self.mode_until:
             self.mode = "idle"
+        if self.mode == "eat" and self.digest_progress < 96:
+            self.digest_progress = min(96, self.digest_progress + 1)
+            self._update_refine_ui()
+        elif self.mode == "shine" and self.frame % 3 == 0:
+            self.digest_progress = max(0, self.digest_progress - 2)
+            self._update_refine_ui()
         self._draw_pet()
         self.root.after(FRAME_MS, self._tick)
 
     def _draw_pet(self) -> None:
         self.canvas.delete("all")
         stage = self.stage()
-        bob = 0 if self.mode == "eat" else (self.frame % 12 > 5) * -3
+        bob = 0 if self.mode == "eat" else (self.frame % 12 > 5) * -4
         if self.mode == "pet":
-            bob -= 5
-        x = 150
-        y = 126 + bob
-        scale = 1 + (stage - 1) * 0.12
+            bob -= 8
+        x = 180
+        y = 178 + bob
+        scale = 1.15 + (stage - 1) * 0.13
         size = round(18 * scale)
         body_w = 7 * size
         body_h = 6 * size
@@ -318,19 +382,28 @@ class SpiritDesktopPet:
         spirit_color = self._usage_color(self.short_remaining)
         belly = self._blend(CREAM, spirit_color, self.week_remaining / 100)
 
-        if stage >= 4 or self.mode == "shine":
-            pulse = 8 + (self.frame % 8) * 2
-            self.canvas.create_oval(x - 100 - pulse, y - 105 - pulse, x + 100 + pulse, y + 105 + pulse, outline=CYAN, width=3)
-            for offset in (-72, -36, 48, 82):
-                self._px(x + offset, top - 20 + (self.frame + offset) % 12, 6, 6, CYAN)
+        self.canvas.create_rectangle(18, 18, 342, 300, fill="#fff6df", outline="#eadfca")
+        self.canvas.create_rectangle(28, 28, 332, 290, fill="#fffaf0", outline="")
+
+        aura_active = stage >= 3 or self.mode in {"eat", "shine", "pet"}
+        if aura_active:
+            pulse = 6 + (self.frame % 10) * 2
+            color = CYAN if self.mode != "eat" else GOLD
+            self.canvas.create_oval(x - 112 - pulse, y - 118 - pulse, x + 112 + pulse, y + 118 + pulse, outline=color, width=3)
+            self.canvas.create_oval(x - 91 + pulse // 2, y - 96 + pulse // 2, x + 91 - pulse // 2, y + 96 - pulse // 2, outline="#d3f4ee", width=2)
+            for index, offset in enumerate((-116, -78, -38, 44, 86, 118)):
+                spark_y = top - 28 + ((self.frame * 3 + index * 7) % 58)
+                self._px(x + offset, spark_y, 7, 7, color)
 
         self._shadow(x, top + body_h + 15, body_w)
 
         if stage >= 2:
             self._px(left + body_w - size, top + body_h - size, size * 2, size, INK)
             self._px(left + body_w, top + body_h - size * 2, size, size, JADE_DARK)
+            self._px(left + body_w + size, top + body_h - size * 2, size, size, CREAM)
             if stage >= 3:
-                self._px(left + body_w + size, top + body_h - size * 2, size, size, GOLD)
+                self._px(left + body_w + size * 2, top + body_h - size * 3, size, size * 2, GOLD)
+                self._px(left + body_w + size * 2 + 4, top + body_h - size * 3 + 4, size - 8, size - 8, CYAN)
 
         if stage >= 2:
             pack_x = left + body_w - size
@@ -339,36 +412,57 @@ class SpiritDesktopPet:
             self._px(pack_x + 4, pack_y + 4, size * 2 - 8, size * 3 - 8, "#2e3d3e")
             self._px(pack_x + size // 2, pack_y + size, size, size, GOLD)
             self._px(pack_x + size // 2 + 4, pack_y + size + 4, size - 8, size - 8, CYAN if stage >= 5 else CREAM)
+            self._px(pack_x + size * 2 - 6, pack_y + size * 2, 6, size, CORAL)
 
         self._px(left - size, top + size * 2, size, size * 2, INK)
         self._px(left + body_w, top + size * 2, size, size * 2, INK)
         self._px(left - size + 4, top + size * 2 + 4, size - 4, size * 2 - 8, JADE_DARK)
         self._px(left + body_w, top + size * 2 + 4, size - 4, size * 2 - 8, JADE_DARK)
+        self._px(left - size + 6, top + size * 2 + 6, size - 8, size - 8, "#d79074")
+        self._px(left + body_w + 2, top + size * 2 + 6, size - 8, size - 8, "#d79074")
 
         horn_h = size * (2 if stage < 4 else 3)
         for side in (0, 1):
             hx = left + size * (2 if side == 0 else 5)
-            self._px(hx, top - horn_h + size, size, horn_h, INK)
-            self._px(hx + 4, top - horn_h + size + 4, size - 4, horn_h - 4, GOLD)
+            self._px(hx - 4, top - horn_h + size, size + 8, horn_h, INK)
+            self._px(hx, top - horn_h + size + 4, size, horn_h - 4, GOLD)
+            self._px(hx + 6, top - horn_h + size + 10, size // 2, 6, "#f3d27b")
             if stage >= 3:
                 self._px(hx + (size // 2), top - horn_h, size, size, GOLD)
+                self._px(hx + (size // 2) + 4, top - horn_h + 4, size - 8, size - 8, "#f6df9d")
+
+        if stage >= 4:
+            self._px(x - size // 2, top - horn_h - size // 2, size, size, GOLD)
+            self._px(x - size // 4, top - horn_h - size // 4, size // 2, size // 2, CYAN)
 
         self._px(left + size, top, size * 5, size, INK)
         self._px(left, top + size, size * 7, size * 4, INK)
         self._px(left + size, top + size * 5, size * 5, size, INK)
         self._px(left + size, top + size, size * 5, size * 4, JADE)
         self._px(left + size * 2, top + size * 5, size * 3, size, JADE)
+        self._px(left + size * 2, top + size, size, size // 2, "#f2dda4")
+        self._px(left + size * 4, top + size, size, size // 2, "#f2dda4")
+        self._px(left + size * 3, top + size * 2 - 4, size, 5, "#26746f")
 
         self._px(left + size * 2, top + size * 4, size * 3, size * 2, INK)
         self._px(left + size * 2 + 4, top + size * 4 + 4, size * 3 - 8, size * 2 - 4, belly)
+        self._px(x - size // 2, top + size * 5, size, size // 2, GOLD)
+        self._px(x - size // 4, top + size * 5 + 4, size // 2, size // 2 - 4, CYAN if self.digest_progress > 70 else "#fff6d6")
+        if self.digest_progress:
+            orb_size = max(8, int(size * self.digest_progress / 100))
+            self._px(x - orb_size // 2, top + size * 5 + size // 2, orb_size, orb_size, CYAN if self.mode == "shine" else GOLD)
 
         self._px(left + size * 2, top + size * 2, size // 2, size // 2, CORAL)
         self._px(left + size * 5 - size // 2, top + size * 2, size // 2, size // 2, CORAL)
 
         if self.mode == "eat":
-            self._px(left + size * 2, top + size * 3, size * 3, size, INK)
+            self._px(left + size * 2 - 4, top + size * 3 - 4, size * 3 + 8, size + 8, INK)
             self._px(left + size * 3, top + size * 4, size, size // 2, "#f3a0a9")
-            self._px(x - 6, top - 34 + (self.frame % 6) * 3, 12, 14, GOLD)
+            self._px(left + size * 2 + 4, top + size * 3 - 4, size // 2, size // 2, "#ffffff")
+            self._px(left + size * 4, top + size * 3 - 4, size // 2, size // 2, "#ffffff")
+            item_y = top - 36 + (self.frame % 8) * 5
+            self._px(x - 8, item_y, 16, 18, GOLD)
+            self._px(x - 4, item_y + 4, 8, 8, "#ffffff")
         elif self.short_remaining < 20:
             self._px(left + size * 2, top + size * 2, size, 5, INK)
             self._px(left + size * 4, top + size * 2, size, 5, INK)
@@ -386,7 +480,7 @@ class SpiritDesktopPet:
             self._px(x - size // 4, top + size // 2 + 3, size // 2, size // 2 - 4, CYAN)
             self._px(x - size // 2, top + size * 5, size, size, GOLD)
 
-        if stage >= 5:
+        if stage >= 5 or self.mode == "shine":
             self.canvas.create_arc(x - 112, top - 42, x + 112, top + 76, start=15, extent=150, style="arc", outline=GOLD, width=4)
             self._px(x - 6, top - 52, 12, 12, GOLD)
 
@@ -395,7 +489,7 @@ class SpiritDesktopPet:
         self._px(left + size + 4, top + body_h + 4, size * 2 - 8, size - 4, JADE_DARK)
         self._px(left + size * 4 + 4, top + body_h + 4, size * 2 - 8, size - 4, JADE_DARK)
 
-        self.canvas.create_text(x, 224, text=f"{self.stage_name()} · 玉简 {self.scroll_count}", fill=INK, font=("Microsoft YaHei UI", 9, "bold"))
+        self.canvas.create_text(x, 304, text=f"{self.stage_name()} · 玉简 {self.scroll_count}", fill=INK, font=("Microsoft YaHei UI", 10, "bold"))
 
     def _px(self, x: int, y: int, width: int, height: int, fill: str) -> None:
         self.canvas.create_rectangle(x, y, x + width, y + height, fill=fill, outline="")
@@ -414,6 +508,22 @@ class SpiritDesktopPet:
         next_steps = ["同步灵脉", "投喂灵材", "确认炼化", "玉简入洞府"]
         next_step = next((next_steps[index] for index, done in enumerate(checks) if not done), "闭环已通")
         self.progress.config(text=f"一代闭环 {score}% · 下一步：{next_step}")
+
+    def _update_refine_ui(self) -> None:
+        self.digest_progress = max(0, min(100, self.digest_progress))
+        self.refine_value.config(text=f"{self.digest_progress}%")
+        self.refine_bar.config(value=self.digest_progress)
+
+    def _say(self, speech: str, event: str, color: str = GOOD) -> None:
+        self.bubble.config(text=speech)
+        self.status.config(text=event, fg=color)
+        self._append_event(event)
+
+    def _append_event(self, event: str) -> None:
+        stamp = datetime.now().strftime("%H:%M")
+        self.events.insert(0, f"{stamp} · {event}")
+        self.events = self.events[:4]
+        self.log.config(text="灵兽日志：\n" + "\n".join(self.events))
 
     def stage(self) -> int:
         score = self.feed_count * 2 + self.useful_count * 4 + (1 if self.plan_type not in {"读取中", "Demo"} else 0)
