@@ -48,6 +48,19 @@ p {
   margin-top: 0;
 }
 
+.back-link {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 0 14px;
+  color: #ffffff;
+  background: var(--spirit-ink);
+  border: 2px solid var(--spirit-ink);
+  text-decoration: none;
+  font-weight: 800;
+}
+
 h1 {
   margin-bottom: 10px;
   font-size: clamp(34px, 6vw, 68px);

@@ -58,6 +58,7 @@ button {
 }
 
 .top-strip,
+.top-actions,
 .section-heading,
 .meter-row,
 .quick-actions,
@@ -67,6 +68,10 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.top-actions {
+  flex-shrink: 0;
 }
 
 .eyebrow {
@@ -94,7 +99,8 @@ h2 {
 .icon-button,
 .primary-button,
 .quick-actions button,
-.section-heading button {
+.section-heading button,
+.utility-link {
   border: 1px solid var(--line);
   background: var(--panel);
   color: var(--ink);
@@ -102,6 +108,14 @@ h2 {
   min-height: 38px;
   padding: 0 14px;
   cursor: pointer;
+}
+
+.utility-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .icon-button {
@@ -680,6 +694,42 @@ small {
 .guard-list span {
   color: var(--muted);
   font-size: 12px;
+}
+
+.art-resource-card {
+  background: #fffaf0;
+}
+
+.art-card-body {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.art-card-body img {
+  width: 82px;
+  height: 82px;
+  border: 1px solid var(--line);
+  background: #fff8e7;
+  image-rendering: pixelated;
+}
+
+.art-card-body div {
+  display: grid;
+  gap: 6px;
+}
+
+.art-card-body span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.art-card-body a {
+  color: var(--jade);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .log-section {

@@ -163,4 +163,5 @@
 - 部署五阶段饕餮参考图为 `assets/art/references/taotie-evolution-reference.png`。
 - 新增静态饕餮 SVG 标记、玉简 SVG 图标、颜色 token 和资源 manifest。
 - 新增 `art-kit.html` 预览页，用于检查参考图、静态标记和核心色板。
+- 浏览器 demo 新增美术资源入口和资源卡，让资源包进入实际产品导航。
 - 资源包不替代桌宠运行时绘制；桌宠仍以程序化动画为主，资源包服务于封面、README、分享卡和设计工具。
