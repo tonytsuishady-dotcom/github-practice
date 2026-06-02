@@ -1,0 +1,33 @@
+# Codex Spirit Companion Art Kit
+
+This folder keeps the first reusable art resources for the Codex spirit pet project.
+
+## Reference
+
+- `references/taotie-evolution-reference.png`
+  - Five-stage Taotie evolution reference.
+  - Use it as style direction, not as the runtime animation source.
+
+## Sprite Direction
+
+The runtime desktop pet is still programmatic. It is drawn in `desktop_pet.py` so the pet can react to keyboard input, feeding, digestion, sleep, and low-energy states.
+
+Future sprite sheets should follow this direction:
+
+- Jade green body.
+- Warm cream belly.
+- Antique gold horns.
+- Coral blush.
+- Thick dark outline.
+- Small readable silhouette.
+- Stable dress-up anchors: head, chest or neck charm, back item.
+
+## Current Deployable Assets
+
+- `sprites/taotie-mini.svg`: simple static mascot mark for README, web UI, or share-card drafts.
+- `icons/jade-slip.svg`: small jade-slip icon for file feeding or output records.
+- `tokens.css`: shared art colors and UI tokens.
+
+## Privacy
+
+Do not place user files, screenshots with private information, auth paths, token values, or real account identifiers in this folder.

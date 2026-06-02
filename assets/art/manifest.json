@@ -1,0 +1,37 @@
+{
+  "name": "Codex Spirit Companion Art Kit",
+  "version": 1,
+  "style": {
+    "body": "jade green",
+    "belly": "warm cream",
+    "horns": "antique gold",
+    "blush": "coral",
+    "outline": "thick dark pixel outline"
+  },
+  "assets": [
+    {
+      "id": "taotie-evolution-reference",
+      "path": "references/taotie-evolution-reference.png",
+      "type": "reference",
+      "usage": "Five-stage visual direction only"
+    },
+    {
+      "id": "taotie-mini",
+      "path": "sprites/taotie-mini.svg",
+      "type": "sprite-mark",
+      "usage": "Static mascot mark for documentation and share cards"
+    },
+    {
+      "id": "jade-slip",
+      "path": "icons/jade-slip.svg",
+      "type": "icon",
+      "usage": "File feeding and jade-slip output records"
+    },
+    {
+      "id": "art-tokens",
+      "path": "tokens.css",
+      "type": "tokens",
+      "usage": "Shared color tokens for browser UI and future art pages"
+    }
+  ]
+}

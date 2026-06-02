@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Codex Taotie Mini Sprite</title>
+  <desc id="desc">A compact pixel-style jade Taotie spirit pet with gold horns and cream belly.</desc>
+  <rect width="256" height="256" fill="#fff8e7"/>
+  <ellipse cx="128" cy="222" rx="76" ry="14" fill="#d8c8a8"/>
+  <rect x="58" y="86" width="140" height="108" rx="34" fill="#203d3a"/>
+  <rect x="66" y="78" width="124" height="108" rx="30" fill="#3aa0a0"/>
+  <rect x="84" y="160" width="72" height="54" rx="22" fill="#203d3a"/>
+  <rect x="92" y="166" width="56" height="44" rx="18" fill="#f7e7bd"/>
+  <rect x="70" y="108" width="24" height="34" rx="10" fill="#2c7f88"/>
+  <rect x="162" y="108" width="24" height="34" rx="10" fill="#2c7f88"/>
+  <rect x="72" y="114" width="10" height="16" fill="#dd786f"/>
+  <rect x="174" y="114" width="10" height="16" fill="#dd786f"/>
+  <rect x="94" y="116" width="16" height="20" fill="#203d3a"/>
+  <rect x="156" y="116" width="16" height="20" fill="#203d3a"/>
+  <rect x="99" y="119" width="5" height="6" fill="#ffffff"/>
+  <rect x="161" y="119" width="5" height="6" fill="#ffffff"/>
+  <rect x="102" y="146" width="54" height="12" fill="#203d3a"/>
+  <rect x="116" y="156" width="28" height="10" fill="#f3a0a9"/>
+  <rect x="94" y="68" width="22" height="40" rx="8" fill="#203d3a"/>
+  <rect x="100" y="62" width="14" height="42" rx="6" fill="#c8b983"/>
+  <rect x="150" y="68" width="22" height="40" rx="8" fill="#203d3a"/>
+  <rect x="152" y="62" width="14" height="42" rx="6" fill="#c8b983"/>
+  <rect x="120" y="82" width="24" height="16" fill="#c8b983"/>
+  <rect x="126" y="86" width="12" height="8" fill="#6eddd7"/>
+  <rect x="112" y="192" width="18" height="14" fill="#c8b983"/>
+  <rect x="116" y="196" width="10" height="8" fill="#6eddd7"/>
+  <rect x="74" y="196" width="42" height="22" rx="11" fill="#203d3a"/>
+  <rect x="82" y="198" width="30" height="16" rx="8" fill="#2c7f88"/>
+  <rect x="142" y="196" width="42" height="22" rx="11" fill="#203d3a"/>
+  <rect x="148" y="198" width="30" height="16" rx="8" fill="#2c7f88"/>
+</svg>
