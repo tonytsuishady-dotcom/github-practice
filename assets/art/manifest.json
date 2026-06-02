@@ -34,6 +34,12 @@
       "usage": "State labels, triggers, and visual notes"
     },
     {
+      "id": "art-kit-page-script",
+      "path": "../../art-kit.js",
+      "type": "preview-script",
+      "usage": "Renders state data cards in art-kit.html"
+    },
+    {
       "id": "jade-slip",
       "path": "icons/jade-slip.svg",
       "type": "icon",

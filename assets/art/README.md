@@ -30,6 +30,8 @@ Future sprite sheets should follow this direction:
 - `states.json`: state labels, triggers, and visual notes for implementation/design sync.
 - `tokens.css`: shared art colors and UI tokens.
 
+The preview page `../../art-kit.html` uses `../../art-kit.js` to render `states.json` into readable state cards.
+
 ## Privacy
 
 Do not place user files, screenshots with private information, auth paths, token values, or real account identifiers in this folder.
