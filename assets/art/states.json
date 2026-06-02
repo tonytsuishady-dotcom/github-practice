@@ -1,0 +1,52 @@
+{
+  "states": [
+    {
+      "id": "idle",
+      "label": "待机呼吸",
+      "trigger": "No recent input",
+      "visual": "Neutral eyes, small breathing bounce"
+    },
+    {
+      "id": "typing",
+      "label": "敲玉简",
+      "trigger": "Keyboard or mouse input",
+      "visual": "Alternating paw strike, small hit spark"
+    },
+    {
+      "id": "clicking",
+      "label": "被摸醒",
+      "trigger": "Pet click",
+      "visual": "Happy face, lifted paws, +1 feedback"
+    },
+    {
+      "id": "eating",
+      "label": "吞灵材",
+      "trigger": "File feeding starts",
+      "visual": "Open mouth, falling material"
+    },
+    {
+      "id": "digesting",
+      "label": "炼化中",
+      "trigger": "After feeding",
+      "visual": "Belly glow and small cyan particles"
+    },
+    {
+      "id": "happy",
+      "label": "发光开心",
+      "trigger": "Useful result confirmed",
+      "visual": "Gold arc, bright belly orb"
+    },
+    {
+      "id": "low_energy",
+      "label": "灵脉偏低",
+      "trigger": "Short-term usage below 20%",
+      "visual": "Dim expression, red status color"
+    },
+    {
+      "id": "sleeping",
+      "label": "打坐犯困",
+      "trigger": "Long idle time",
+      "visual": "Closed eyes and sleep marks"
+    }
+  ]
+}

@@ -25,7 +25,9 @@ Future sprite sheets should follow this direction:
 ## Current Deployable Assets
 
 - `sprites/taotie-mini.svg`: simple static mascot mark for README, web UI, or share-card drafts.
+- `sprites/taotie-state-sheet.svg`: visual state sheet for the desktop pet's eight life states.
 - `icons/jade-slip.svg`: small jade-slip icon for file feeding or output records.
+- `states.json`: state labels, triggers, and visual notes for implementation/design sync.
 - `tokens.css`: shared art colors and UI tokens.
 
 ## Privacy

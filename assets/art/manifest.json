@@ -22,6 +22,18 @@
       "usage": "Static mascot mark for documentation and share cards"
     },
     {
+      "id": "taotie-state-sheet",
+      "path": "sprites/taotie-state-sheet.svg",
+      "type": "state-sheet",
+      "usage": "Visual spec for desktop pet life states"
+    },
+    {
+      "id": "pet-states",
+      "path": "states.json",
+      "type": "state-data",
+      "usage": "State labels, triggers, and visual notes"
+    },
+    {
       "id": "jade-slip",
       "path": "icons/jade-slip.svg",
       "type": "icon",

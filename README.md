@@ -79,7 +79,7 @@ animation-demo.html
 assets/art/
 ```
 
-里面包含五阶段饕餮参考图、静态饕餮 SVG 标记、玉简图标、颜色 token 和资源清单。启动本地服务后可以访问：
+里面包含五阶段饕餮参考图、静态饕餮 SVG 标记、桌宠生命状态素材板、玉简图标、颜色 token 和资源清单。启动本地服务后可以访问：
 
 ```text
 http://localhost:3000/art-kit.html
