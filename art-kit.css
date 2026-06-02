@@ -15,6 +15,7 @@ body {
 .hero,
 .reference,
 .asset-grid article,
+.manifest-panel,
 .state-spec,
 .palette {
   border: 2px solid var(--spirit-ink);
@@ -73,6 +74,7 @@ h2 {
 }
 
 .reference,
+.manifest-panel,
 .state-spec,
 .palette {
   margin-top: 18px;
@@ -110,6 +112,13 @@ h2 {
   gap: 12px;
 }
 
+.manifest-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.manifest-grid article,
 .state-grid article {
   min-height: 146px;
   display: grid;
@@ -120,10 +129,12 @@ h2 {
   border: 2px solid var(--spirit-ink);
 }
 
+.manifest-grid strong,
 .state-grid strong {
   font-size: 16px;
 }
 
+.manifest-grid code,
 .state-grid code {
   width: fit-content;
   padding: 3px 6px;
@@ -132,10 +143,18 @@ h2 {
   font-size: 12px;
 }
 
+.manifest-grid span,
+.manifest-grid a,
 .state-grid span {
   color: #65707f;
   font-size: 12px;
   line-height: 1.45;
+}
+
+.manifest-grid a {
+  color: var(--spirit-good);
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .swatches {
@@ -170,6 +189,7 @@ h2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .manifest-grid,
   .state-grid {
     grid-template-columns: 1fr;
   }

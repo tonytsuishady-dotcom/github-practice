@@ -91,6 +91,8 @@ http://localhost:3000/art-kit.html
 
 资源页会读取 `assets/art/states.json` 并生成状态说明卡片，便于把程序状态、动画触发条件和视觉设计统一起来。
 
+资源页也会读取 `assets/art/manifest.json` 展示资源清单，方便后续设计、展示图和打包流程直接找到对应文件。
+
 ## 项目记忆与设计工具
 
 当前已安装 Figma 和 Canva 插件，用于后续 UI 设计、组件规范、项目封面、灵兽图鉴和宣传素材。

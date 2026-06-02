@@ -1,4 +1,5 @@
 const stateGrid = document.querySelector("#stateGrid");
+const manifestGrid = document.querySelector("#manifestGrid");
 
 const fallbackStates = [
   ["idle", "待机呼吸", "No recent input", "Neutral eyes, small breathing bounce"],
@@ -27,6 +28,23 @@ function renderStates(states) {
     .join("");
 }
 
+function renderManifest(assets) {
+  if (!manifestGrid) return;
+  manifestGrid.innerHTML = assets
+    .map((asset) => {
+      const href = asset.path.startsWith("../") ? asset.path : `assets/art/${asset.path}`;
+      return `
+        <article>
+          <strong>${asset.id}</strong>
+          <code>${asset.type}</code>
+          <span><b>用途：</b>${asset.usage}</span>
+          <a href="${href}">${asset.path}</a>
+        </article>
+      `;
+    })
+    .join("");
+}
+
 async function loadStates() {
   try {
     const response = await fetch("assets/art/states.json");
@@ -38,4 +56,23 @@ async function loadStates() {
   }
 }
 
+async function loadManifest() {
+  try {
+    const response = await fetch("assets/art/manifest.json");
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    renderManifest(data.assets || []);
+  } catch (_error) {
+    renderManifest([
+      {
+        id: "manifest-fallback",
+        path: "assets/art/manifest.json",
+        type: "fallback",
+        usage: "Use the local server to render the full resource list.",
+      },
+    ]);
+  }
+}
+
 loadStates();
+loadManifest();
