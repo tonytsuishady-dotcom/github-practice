@@ -63,6 +63,7 @@ class SpiritDesktopPet:
         self.events: list[str] = []
         self.tap_side = 0
         self.key_taps = 0
+        self.hit_flash_frame = 0
         self.mini_mode = False
         self.last_activity_frame = 0
         self.sleep_after_frames = 360
@@ -134,11 +135,11 @@ class SpiritDesktopPet:
         self.canvas.pack(pady=(2, 0))
         self.canvas.bind("<Button-1>", self.pet)
 
-        stats = tk.Frame(self.card, bg=PAPER)
-        stats.pack(fill="x", padx=14, pady=(0, 8))
-        self.stage_chip = self._stat_chip(stats, "境界", "幼体")
-        self.scroll_chip = self._stat_chip(stats, "玉简", "0")
-        self.digest_chip = self._stat_chip(stats, "炼化", "0%")
+        self.stats = tk.Frame(self.card, bg=PAPER)
+        self.stats.pack(fill="x", padx=14, pady=(0, 8))
+        self.stage_chip = self._stat_chip(self.stats, "境界", "幼体")
+        self.scroll_chip = self._stat_chip(self.stats, "玉简", "0")
+        self.digest_chip = self._stat_chip(self.stats, "炼化", "0%")
 
         self.bubble = tk.Label(
             self.card,
@@ -309,13 +310,18 @@ class SpiritDesktopPet:
         self._touch_activity()
         self.mini_mode = not self.mini_mode
         if self.mini_mode:
+            self.plan.pack_forget()
+            self.stats.pack_forget()
             self.detail.pack_forget()
-            self.root.geometry("430x505")
+            self.root.geometry("420x445")
             self.root.attributes("-alpha", 0.96)
             self.mini_button.config(text="□")
-            self._say("小窗伴随中。我会盯着灵脉，也会跟着你的输入敲玉简。", "迷你桌宠模式开启。", GOOD)
+            self.bubble.config(text=f"小窗伴随 · 短期灵脉 {self.short_remaining}% · 炼化 {self.digest_progress}%")
+            self.status.config(text="迷你桌宠模式开启。", fg=GOOD)
             return
 
+        self.plan.pack(fill="x", padx=14, pady=(2, 8), before=self.canvas)
+        self.stats.pack(fill="x", padx=14, pady=(0, 8), after=self.canvas)
         self.detail.pack(fill="both", expand=True)
         self.root.geometry("450x700")
         self.root.attributes("-alpha", 1.0)
@@ -401,20 +407,19 @@ class SpiritDesktopPet:
 
     def pet(self, _event: tk.Event | None = None) -> None:
         self._touch_activity()
-        self.mode = "pet"
-        self.mode_until = self.frame + 18
+        self._set_mode("clicking", 18)
         self._say("饕餮蹭了蹭你：今日也要炼化成真正成果。", "摸摸灵兽，精神 +1。", GOOD)
 
     def tap_jade_slip(self, from_key: bool = False, from_global: bool = False, source: str = "键盘") -> None:
         self._touch_activity()
         self.tap_side = 1 - self.tap_side
         self.key_taps += 1
-        self.mode = "tap-left" if self.tap_side == 0 else "tap-right"
-        self.mode_until = self.frame + 8
+        self.hit_flash_frame = self.frame
+        self._set_mode("typing", 9 + (self.key_taps % 3))
         action_source = f"全局{source}" if from_global else ("键盘输入" if from_key else "敲玉简")
         if self.key_taps % 12 == 0:
             self.digest_progress = min(99, self.digest_progress + 6)
-        self.bubble.config(text="哒。哒。饕餮帮你敲着玉简。")
+        self.bubble.config(text="哒、哒、哒。饕餮正跟着你的节奏敲玉简。")
         self.status.config(text=f"{action_source}驱动动作 · {self.key_taps} 次", fg=GOOD)
         if not from_global or self.key_taps % 8 == 1:
             self._append_event(f"{action_source}驱动动作 · {self.key_taps} 次")
@@ -448,8 +453,7 @@ class SpiritDesktopPet:
         self.scroll_count += saved
         self.digest_progress = min(95, self.digest_progress + 34 + saved * 8)
         self.last_material = names[0] if names else ""
-        self.mode = "eat"
-        self.mode_until = self.frame + 34
+        self._set_mode("eating", 30)
         self._say(
             f"咔嚓！收下 {saved} 份灵材，正在炼化成玉简。",
             f"投喂：{', '.join(names[:2])}{' 等' if len(names) > 2 else ''}",
@@ -463,8 +467,7 @@ class SpiritDesktopPet:
         self._touch_activity()
         self.useful_count += 1
         self.digest_progress = 100
-        self.mode = "shine"
-        self.mode_until = self.frame + 42
+        self._set_mode("happy", 42)
         self._say("炼化完成！这次消耗转成了修为。", "有效成果 +1，灵兽发光。", GOOD)
         self._save_local_state()
         self._render_progress()
@@ -517,24 +520,34 @@ class SpiritDesktopPet:
 
     def _tick(self) -> None:
         self.frame += 1
-        if self.mode != "idle" and self.frame > self.mode_until:
+        if self.mode == "eating" and self.frame > self.mode_until:
+            self._set_mode("digesting", 46)
+            self.bubble.config(text="咕噜咕噜。灵材正在肚子里炼成玉简。")
+            self.status.config(text="炼化中：把投喂转成可用成果。", fg=GOOD)
+        elif self.mode != "idle" and self.frame > self.mode_until:
             self.mode = "idle"
         sleeping = self._is_sleeping()
         if sleeping and not self.was_sleeping:
             self.bubble.config(text="灵兽盘起来打坐了。敲键盘、点它或投喂灵材，都能把它唤醒。")
             self.status.config(text="空闲中：进入打坐/犯困状态。", fg="#65707f")
         self.was_sleeping = sleeping
-        if self.mode == "eat" and self.digest_progress < 96:
+        if self.mode in {"eating", "digesting"} and self.digest_progress < 96:
             self.digest_progress = min(96, self.digest_progress + 1)
             self._update_refine_ui()
-        elif self.mode == "shine" and self.frame % 3 == 0:
+        elif self.mode == "happy" and self.frame % 3 == 0:
             self.digest_progress = max(0, self.digest_progress - 2)
             self._update_refine_ui()
-        elif self.mode.startswith("tap") and self.frame % 2 == 0:
+        elif self.mode == "typing" and self.frame % 2 == 0:
             self.digest_progress = min(99, self.digest_progress + 1)
             self._update_refine_ui()
+        if self.mini_mode and self.frame % 10 == 0:
+            self.bubble.config(text=f"{self._state_label()} · 短期灵脉 {self.short_remaining}% · 炼化 {self.digest_progress}%")
         self._draw_pet()
         self.root.after(FRAME_MS, self._tick)
+
+    def _set_mode(self, mode: str, frames: int) -> None:
+        self.mode = mode
+        self.mode_until = self.frame + frames
 
     def _touch_activity(self) -> None:
         self.last_activity_frame = self.frame
@@ -544,14 +557,43 @@ class SpiritDesktopPet:
         idle_frames = self.frame - self.last_activity_frame
         return self.mode == "idle" and idle_frames > self.sleep_after_frames
 
+    def _visual_state(self) -> str:
+        if self._is_sleeping():
+            return "sleeping"
+        if self.mode == "idle" and self.short_remaining < 20:
+            return "low_energy"
+        return self.mode
+
+    def _state_label(self) -> str:
+        labels = {
+            "idle": "待机呼吸",
+            "sleeping": "打坐犯困",
+            "typing": "敲玉简",
+            "clicking": "被摸醒",
+            "eating": "吞灵材",
+            "digesting": "炼化中",
+            "happy": "发光开心",
+            "low_energy": "灵脉偏低",
+        }
+        return labels.get(self._visual_state(), "待机呼吸")
+
     def _draw_pet(self) -> None:
         self.canvas.delete("all")
         stage = self.stage()
-        sleeping = self._is_sleeping()
-        bob = 0 if self.mode in {"eat", "tap-left", "tap-right"} or sleeping else (self.frame % 12 > 5) * -4
-        if self.mode == "pet":
+        state = self._visual_state()
+        sleeping = state == "sleeping"
+        bob = 0 if state in {"eating", "typing", "sleeping", "digesting"} else (self.frame % 12 > 5) * -4
+        if state == "clicking":
             bob -= 8
+        if state == "typing":
+            bob += (-2, 0, 2, 0)[self.frame % 4]
+        elif state == "digesting":
+            bob += (self.frame % 8 in {0, 1}) * 2
         x = 180
+        if state == "typing":
+            x += (-4, 0, 4, 0)[self.frame % 4]
+        elif state == "clicking":
+            x += (self.frame % 6 in {0, 1, 2}) * 3
         y = 178 + bob
         scale = 1.15 + (stage - 1) * 0.13
         size = round(18 * scale)
@@ -581,10 +623,10 @@ class SpiritDesktopPet:
         self._px(322, 300, 18, 6, GOLD)
         self._px(334, 288, 6, 18, GOLD)
 
-        aura_active = not sleeping and (stage >= 3 or self.mode in {"eat", "shine", "pet", "tap-left", "tap-right"})
+        aura_active = not sleeping and (stage >= 3 or state in {"eating", "digesting", "happy", "clicking", "typing"})
         if aura_active:
             pulse = 6 + (self.frame % 10) * 2
-            color = CYAN if self.mode != "eat" else GOLD
+            color = GOLD if state == "eating" else CYAN
             self.canvas.create_oval(x - 112 - pulse, y - 118 - pulse, x + 112 + pulse, y + 118 + pulse, outline=color, width=3)
             self.canvas.create_oval(x - 91 + pulse // 2, y - 96 + pulse // 2, x + 91 - pulse // 2, y + 96 - pulse // 2, outline="#d3f4ee", width=2)
             for index, offset in enumerate((-116, -78, -38, 44, 86, 118)):
@@ -612,8 +654,13 @@ class SpiritDesktopPet:
 
         self._px(left - size, top + size * 2, size, size * 2, INK)
         self._px(left + body_w, top + size * 2, size, size * 2, INK)
-        left_arm_drop = 12 if self.mode == "tap-left" else 0
-        right_arm_drop = 12 if self.mode == "tap-right" else 0
+        typing_drop = 16 + (self.key_taps % 3) * 2
+        left_arm_drop = typing_drop if state == "typing" and self.tap_side == 0 else 0
+        right_arm_drop = typing_drop if state == "typing" and self.tap_side == 1 else 0
+        if state == "eating":
+            left_arm_drop = right_arm_drop = 8
+        elif state == "clicking":
+            left_arm_drop = right_arm_drop = -6
         self._px(left - size + 4, top + size * 2 + 4 + left_arm_drop, size - 4, size * 2 - 8, JADE_DARK)
         self._px(left + body_w, top + size * 2 + 4 + right_arm_drop, size - 4, size * 2 - 8, JADE_DARK)
         self._px(left - size + 6, top + size * 2 + 6, size - 8, size - 8, "#d79074")
@@ -656,12 +703,16 @@ class SpiritDesktopPet:
         self._px(x - size // 4, top + size * 5 + 4, size // 2, size // 2 - 4, CYAN if self.digest_progress > 70 else "#fff6d6")
         if self.digest_progress:
             orb_size = max(8, int(size * self.digest_progress / 100))
-            self._px(x - orb_size // 2, top + size * 5 + size // 2, orb_size, orb_size, CYAN if self.mode == "shine" else GOLD)
+            orb_y = top + size * 5 + size // 2
+            if state == "digesting":
+                orb_size += (self.frame % 6 in {0, 1, 2}) * 4
+                orb_y -= (self.frame % 5)
+            self._px(x - orb_size // 2, orb_y, orb_size, orb_size, CYAN if state == "happy" else GOLD)
 
         self._px(left + size * 2, top + size * 2, size // 2, size // 2, CORAL)
         self._px(left + size * 5 - size // 2, top + size * 2, size // 2, size // 2, CORAL)
 
-        if self.mode == "eat":
+        if state == "eating":
             self._px(left + size * 2 - 4, top + size * 3 - 4, size * 3 + 8, size + 8, INK)
             self._px(left + size * 3, top + size * 4, size, size // 2, "#f3a0a9")
             self._px(left + size * 2 + 4, top + size * 3 - 4, size // 2, size // 2, "#ffffff")
@@ -669,6 +720,13 @@ class SpiritDesktopPet:
             item_y = top - 36 + (self.frame % 8) * 5
             self._px(x - 8, item_y, 16, 18, GOLD)
             self._px(x - 4, item_y + 4, 8, 8, "#ffffff")
+        elif state == "digesting":
+            self._px(left + size * 2, top + size * 2, size // 2, size // 2, INK)
+            self._px(left + size * 4, top + size * 2, size // 2, size // 2, INK)
+            self._px(left + size * 3 - 4, top + size * 3, size * 2, 5, INK)
+            for offset in (-28, 0, 28):
+                spark_y = top + size * 5 + ((self.frame + offset) % 18)
+                self._px(x + offset, spark_y, 6, 6, CYAN)
         elif sleeping:
             self._px(left + size * 2, top + size * 2, size, 5, INK)
             self._px(left + size * 4, top + size * 2, size, 5, INK)
@@ -677,16 +735,27 @@ class SpiritDesktopPet:
             self.canvas.create_text(x + 84, top + 24, text="Z", fill=INK, font=("Microsoft YaHei UI", 14, "bold"))
             self.canvas.create_text(x + 104, top + 4, text="z", fill="#65707f", font=("Microsoft YaHei UI", 11, "bold"))
             self.canvas.create_text(x + 118, top - 14, text="z", fill="#8da19a", font=("Microsoft YaHei UI", 9, "bold"))
-        elif self.mode.startswith("tap"):
+        elif state == "typing":
             self._px(x - size * 2, top + size * 6 + 8, size * 4, size // 2, INK)
             self._px(x - size * 2 + 4, top + size * 6 + 12, size * 4 - 8, size // 2 - 4, "#fff7dc")
-            hit_x = left - size // 2 if self.mode == "tap-left" else left + body_w - size // 2
+            hit_x = left - size // 2 if self.tap_side == 0 else left + body_w - size // 2
             self._px(hit_x, top + size * 6, size, 6, GOLD)
             self._px(hit_x + size // 2, top + size * 6 - 8, 6, 8, CYAN)
-        elif self.short_remaining < 20:
+            if self.frame - self.hit_flash_frame < 5:
+                self._px(hit_x - 8, top + size * 6 - 18, 8, 8, GOLD)
+                self._px(hit_x + size + 2, top + size * 6 - 22, 8, 8, CYAN)
+                self.canvas.create_text(hit_x + size // 2, top + size * 6 - 32, text="哒", fill=INK, font=("Microsoft YaHei UI", 10, "bold"))
+        elif state == "low_energy":
             self._px(left + size * 2, top + size * 2, size, 5, INK)
             self._px(left + size * 4, top + size * 2, size, 5, INK)
             self._px(left + size * 3, top + size * 3, size, 5, INK)
+            self._px(left + size * 3, top + size * 3 + 8, size // 2, 4, "#65707f")
+        elif state == "clicking":
+            self._px(left + size * 2, top + size * 2, size // 2, size // 2, INK)
+            self._px(left + size * 4, top + size * 2, size // 2, size // 2, INK)
+            self._px(left + size * 3 - 2, top + size * 3, size * 2, 6, INK)
+            self._px(left + size * 3, top + size * 3 + 6, size, 6, "#f3a0a9")
+            self.canvas.create_text(x, top - 36, text="精神 +1", fill=GOOD, font=("Microsoft YaHei UI", 10, "bold"))
         else:
             blink = self.frame % 32 in {0, 1}
             eye_h = 4 if blink else size // 2
@@ -700,7 +769,7 @@ class SpiritDesktopPet:
             self._px(x - size // 4, top + size // 2 + 3, size // 2, size // 2 - 4, CYAN)
             self._px(x - size // 2, top + size * 5, size, size, GOLD)
 
-        if stage >= 5 or self.mode == "shine":
+        if stage >= 5 or state == "happy":
             self.canvas.create_arc(x - 112, top - 42, x + 112, top + 76, start=15, extent=150, style="arc", outline=GOLD, width=4)
             self._px(x - 6, top - 52, 12, 12, GOLD)
 
