@@ -63,6 +63,10 @@ class SpiritDesktopPet:
         self.events: list[str] = []
         self.tap_side = 0
         self.key_taps = 0
+        self.mini_mode = False
+        self.last_activity_frame = 0
+        self.sleep_after_frames = 360
+        self.was_sleeping = False
         self.global_sensing = False
         self.global_thread_started = False
         self.global_down: set[int] = set()
@@ -112,6 +116,8 @@ class SpiritDesktopPet:
 
         self._icon_button(header, "×", self.root.destroy).pack(side="right", padx=(4, 0))
         self._icon_button(header, "↻", self.refresh).pack(side="right")
+        self.mini_button = self._icon_button(header, "▣", self.toggle_mini_mode)
+        self.mini_button.pack(side="right", padx=(0, 4))
 
         self.plan = tk.Label(
             self.card,
@@ -147,8 +153,11 @@ class SpiritDesktopPet:
         )
         self.bubble.pack(fill="x", padx=14, pady=(0, 8))
 
+        self.detail = tk.Frame(self.card, bg=PAPER)
+        self.detail.pack(fill="both", expand=True)
+
         self.status = tk.Label(
-            self.card,
+            self.detail,
             text="点击灵兽可以互动，投喂文件会生成本地玉简。",
             bg=PAPER,
             fg="#65707f",
@@ -161,16 +170,16 @@ class SpiritDesktopPet:
         self.short = self._meter("短期灵脉")
         self.week = self._meter("长期灵脉")
 
-        actions = tk.Frame(self.card, bg=PAPER)
+        actions = tk.Frame(self.detail, bg=PAPER)
         actions.pack(fill="x", padx=14, pady=(10, 6))
         self._action_button(actions, "投喂", self.feed_files).pack(side="left", expand=True, fill="x", padx=(0, 4))
         self._action_button(actions, "敲玉简", self.tap_jade_slip).pack(side="left", expand=True, fill="x", padx=4)
         self._action_button(actions, "炼化", self.mark_useful).pack(side="left", expand=True, fill="x", padx=(4, 0))
 
-        self.sense_button = self._action_button(self.card, "开启全局输入感应", self.toggle_global_sensing)
+        self.sense_button = self._action_button(self.detail, "开启全局输入感应", self.toggle_global_sensing)
         self.sense_button.pack(fill="x", padx=14, pady=(0, 6))
 
-        refine = tk.Frame(self.card, bg=PAPER)
+        refine = tk.Frame(self.detail, bg=PAPER)
         refine.pack(fill="x", padx=14, pady=(4, 6))
         refine_top = tk.Frame(refine, bg=PAPER)
         refine_top.pack(fill="x")
@@ -181,7 +190,7 @@ class SpiritDesktopPet:
         self.refine_bar["canvas"].pack(fill="x", pady=(3, 0))
 
         self.progress = tk.Label(
-            self.card,
+            self.detail,
             text="一代闭环：等待灵脉同步",
             bg=PAPER,
             fg=INK,
@@ -190,7 +199,7 @@ class SpiritDesktopPet:
         self.progress.pack(fill="x", padx=14, pady=(2, 10))
 
         self.log = tk.Label(
-            self.card,
+            self.detail,
             text="灵兽日志：等待第一份灵材。",
             bg="#fff7dc",
             fg="#65707f",
@@ -246,7 +255,7 @@ class SpiritDesktopPet:
         return {"canvas": canvas, "border": border, "fill": fill, "color": color}
 
     def _meter(self, label: str) -> dict[str, tk.Widget]:
-        frame = tk.Frame(self.card, bg=PAPER)
+        frame = tk.Frame(self.detail, bg=PAPER)
         frame.pack(fill="x", padx=14, pady=(6, 0))
 
         top = tk.Frame(frame, bg=PAPER)
@@ -283,6 +292,7 @@ class SpiritDesktopPet:
         self.tap_jade_slip(from_key=True)
 
     def toggle_global_sensing(self) -> None:
+        self._touch_activity()
         self.global_sensing = not self.global_sensing
         if self.global_sensing and not self.global_thread_started:
             self.global_thread_started = True
@@ -294,6 +304,23 @@ class SpiritDesktopPet:
             self.sense_button.config(text="开启全局输入感应")
             self.global_down.clear()
             self._say("我收回耳朵了。现在只响应窗口内互动。", "全局输入感应关闭。", WARN)
+
+    def toggle_mini_mode(self) -> None:
+        self._touch_activity()
+        self.mini_mode = not self.mini_mode
+        if self.mini_mode:
+            self.detail.pack_forget()
+            self.root.geometry("430x505")
+            self.root.attributes("-alpha", 0.96)
+            self.mini_button.config(text="□")
+            self._say("小窗伴随中。我会盯着灵脉，也会跟着你的输入敲玉简。", "迷你桌宠模式开启。", GOOD)
+            return
+
+        self.detail.pack(fill="both", expand=True)
+        self.root.geometry("450x700")
+        self.root.attributes("-alpha", 1.0)
+        self.mini_button.config(text="▣")
+        self._say("完整面板展开，可以查看灵脉、炼化炉和日志。", "完整面板已展开。", GOOD)
 
     def _global_input_loop(self) -> None:
         try:
@@ -319,6 +346,7 @@ class SpiritDesktopPet:
             time.sleep(0.035)
 
     def refresh(self) -> None:
+        self._touch_activity()
         self.status.config(text="正在同步 Codex 灵脉...")
         threading.Thread(target=self._load_usage, daemon=True).start()
 
@@ -372,11 +400,13 @@ class SpiritDesktopPet:
         canvas.itemconfig(bar["fill"], fill=color or str(bar["color"]))
 
     def pet(self, _event: tk.Event | None = None) -> None:
+        self._touch_activity()
         self.mode = "pet"
         self.mode_until = self.frame + 18
         self._say("饕餮蹭了蹭你：今日也要炼化成真正成果。", "摸摸灵兽，精神 +1。", GOOD)
 
     def tap_jade_slip(self, from_key: bool = False, from_global: bool = False, source: str = "键盘") -> None:
+        self._touch_activity()
         self.tap_side = 1 - self.tap_side
         self.key_taps += 1
         self.mode = "tap-left" if self.tap_side == 0 else "tap-right"
@@ -391,6 +421,7 @@ class SpiritDesktopPet:
         self._update_refine_ui()
 
     def feed_files(self) -> None:
+        self._touch_activity()
         self._say("张嘴等灵材中。文件只会在本地生成玉简。", "正在打开文件选择框。", GOOD)
         self.root.attributes("-topmost", False)
         self.root.update_idletasks()
@@ -403,6 +434,7 @@ class SpiritDesktopPet:
         self._feed_paths([Path(raw_path) for raw_path in paths])
 
     def _feed_paths(self, paths: list[Path]) -> None:
+        self._touch_activity()
         INBOX.mkdir(exist_ok=True)
         saved = 0
         names = []
@@ -428,6 +460,7 @@ class SpiritDesktopPet:
         self._update_refine_ui()
 
     def mark_useful(self) -> None:
+        self._touch_activity()
         self.useful_count += 1
         self.digest_progress = 100
         self.mode = "shine"
@@ -486,6 +519,11 @@ class SpiritDesktopPet:
         self.frame += 1
         if self.mode != "idle" and self.frame > self.mode_until:
             self.mode = "idle"
+        sleeping = self._is_sleeping()
+        if sleeping and not self.was_sleeping:
+            self.bubble.config(text="灵兽盘起来打坐了。敲键盘、点它或投喂灵材，都能把它唤醒。")
+            self.status.config(text="空闲中：进入打坐/犯困状态。", fg="#65707f")
+        self.was_sleeping = sleeping
         if self.mode == "eat" and self.digest_progress < 96:
             self.digest_progress = min(96, self.digest_progress + 1)
             self._update_refine_ui()
@@ -498,10 +536,19 @@ class SpiritDesktopPet:
         self._draw_pet()
         self.root.after(FRAME_MS, self._tick)
 
+    def _touch_activity(self) -> None:
+        self.last_activity_frame = self.frame
+        self.was_sleeping = False
+
+    def _is_sleeping(self) -> bool:
+        idle_frames = self.frame - self.last_activity_frame
+        return self.mode == "idle" and idle_frames > self.sleep_after_frames
+
     def _draw_pet(self) -> None:
         self.canvas.delete("all")
         stage = self.stage()
-        bob = 0 if self.mode in {"eat", "tap-left", "tap-right"} else (self.frame % 12 > 5) * -4
+        sleeping = self._is_sleeping()
+        bob = 0 if self.mode in {"eat", "tap-left", "tap-right"} or sleeping else (self.frame % 12 > 5) * -4
         if self.mode == "pet":
             bob -= 8
         x = 180
@@ -534,7 +581,7 @@ class SpiritDesktopPet:
         self._px(322, 300, 18, 6, GOLD)
         self._px(334, 288, 6, 18, GOLD)
 
-        aura_active = stage >= 3 or self.mode in {"eat", "shine", "pet"}
+        aura_active = not sleeping and (stage >= 3 or self.mode in {"eat", "shine", "pet", "tap-left", "tap-right"})
         if aura_active:
             pulse = 6 + (self.frame % 10) * 2
             color = CYAN if self.mode != "eat" else GOLD
@@ -622,6 +669,14 @@ class SpiritDesktopPet:
             item_y = top - 36 + (self.frame % 8) * 5
             self._px(x - 8, item_y, 16, 18, GOLD)
             self._px(x - 4, item_y + 4, 8, 8, "#ffffff")
+        elif sleeping:
+            self._px(left + size * 2, top + size * 2, size, 5, INK)
+            self._px(left + size * 4, top + size * 2, size, 5, INK)
+            self._px(left + size * 3, top + size * 3, size, 5, INK)
+            self._px(left + size * 3, top + size * 3 + 7, size // 2, 4, "#f3a0a9")
+            self.canvas.create_text(x + 84, top + 24, text="Z", fill=INK, font=("Microsoft YaHei UI", 14, "bold"))
+            self.canvas.create_text(x + 104, top + 4, text="z", fill="#65707f", font=("Microsoft YaHei UI", 11, "bold"))
+            self.canvas.create_text(x + 118, top - 14, text="z", fill="#8da19a", font=("Microsoft YaHei UI", 9, "bold"))
         elif self.mode.startswith("tap"):
             self._px(x - size * 2, top + size * 6 + 8, size * 4, size // 2, INK)
             self._px(x - size * 2 + 4, top + size * 6 + 12, size * 4 - 8, size // 2 - 4, "#fff7dc")
