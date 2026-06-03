@@ -151,6 +151,23 @@ h2 {
   image-rendering: pixelated;
 }
 
+.state-glyph {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(7, 1fr);
+  gap: 0;
+  padding: 5px;
+  background: #fffaf0;
+  border: 2px solid var(--spirit-ink);
+}
+
+.state-glyph i {
+  display: block;
+  background: var(--fill);
+}
+
 .manifest-filetype {
   color: #ffffff;
   background: var(--spirit-ink);

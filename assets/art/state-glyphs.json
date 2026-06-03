@@ -1,0 +1,91 @@
+{
+  "name": "Codex Spirit Companion State Glyphs",
+  "version": 1,
+  "palette": {
+    ".": "transparent",
+    "i": "#203d3a",
+    "j": "#3aa0a0",
+    "d": "#2c7f88",
+    "c": "#f7e7bd",
+    "g": "#c8b983",
+    "r": "#dd786f",
+    "y": "#6eddd7",
+    "w": "#ffffff",
+    "x": "#c95757",
+    "z": "#65707f"
+  },
+  "glyphs": {
+    "idle": [
+      "..ggg..",
+      ".gcccg.",
+      "ijcjcji",
+      "ijcccji",
+      ".jcccj.",
+      "..jjj..",
+      "...i..."
+    ],
+    "typing": [
+      "..g.g..",
+      ".gcccg.",
+      "ijcjcji",
+      "ijcccji",
+      "yjjjjjy",
+      ".i...i.",
+      "g.....g"
+    ],
+    "clicking": [
+      "..g.g..",
+      ".gcccg.",
+      "ijwjwji",
+      "ijrrrji",
+      ".jcccj.",
+      "y.j.j.y",
+      "..yyy.."
+    ],
+    "eating": [
+      "..g.g..",
+      ".gcccg.",
+      "ijcjcji",
+      "ijiiiji",
+      ".jrrrj.",
+      "..ggg..",
+      "...g..."
+    ],
+    "digesting": [
+      "..g.g..",
+      ".gcccg.",
+      "ijcjcji",
+      "ijcycji",
+      ".jyyyj.",
+      "..yjy..",
+      "...y..."
+    ],
+    "happy": [
+      "..ggg..",
+      "gycccyg",
+      "ijwjwji",
+      "ijrrrji",
+      ".jgygj.",
+      "y.j.j.y",
+      "..yyy.."
+    ],
+    "low_energy": [
+      "..g.g..",
+      ".gcccg.",
+      "ixcxcxi",
+      "ijcccji",
+      ".jxcxj.",
+      "..jjj..",
+      "...x..."
+    ],
+    "sleeping": [
+      "..g.g..",
+      ".gcccg.",
+      "ijiiiji",
+      "ijcccji",
+      ".jcccj.",
+      "..jjj..",
+      "z..z..z"
+    ]
+  }
+}

@@ -20,6 +20,7 @@ STATE_FILE = INBOX / ".desktop-pet-state.json"
 ART_DIR = ROOT / "assets" / "art"
 ART_MANIFEST_FILE = ART_DIR / "manifest.json"
 ART_STATES_FILE = ART_DIR / "states.json"
+ART_GLYPHS_FILE = ART_DIR / "state-glyphs.json"
 REFRESH_MS = 60_000
 FRAME_MS = 140
 
@@ -75,7 +76,7 @@ class SpiritDesktopPet:
         self.global_thread_started = False
         self.global_down: set[int] = set()
         self.last_global_input_at = 0.0
-        self.art_manifest, self.art_states = self._load_art_kit()
+        self.art_manifest, self.art_states, self.art_glyphs = self._load_art_kit()
 
         self._load_local_state()
         self._build_ui()
@@ -787,6 +788,7 @@ class SpiritDesktopPet:
 
         art_state = self._art_state(state)
         art_text = art_state.get("label") or self._state_label()
+        self._draw_state_glyph(42, 278, state, 5)
         self.canvas.create_text(x, 292, text=f"ART · {art_text}", fill="#65707f", font=("Microsoft YaHei UI", 9, "bold"))
         self.canvas.create_text(x, 308, text=f"{self.stage_name()} · 玉简 {self.scroll_count}", fill=INK, font=("Microsoft YaHei UI", 10, "bold"))
 
@@ -795,6 +797,22 @@ class SpiritDesktopPet:
 
     def _shadow(self, x: int, y: int, width: int) -> None:
         self.canvas.create_oval(x - width // 2, y, x + width // 2, y + 16, fill="#d8c8a8", outline="")
+
+    def _draw_state_glyph(self, x: int, y: int, state: str, pixel: int) -> None:
+        palette = self.art_glyphs.get("palette", {})
+        glyphs = self.art_glyphs.get("glyphs", {})
+        glyph = glyphs.get(state) or glyphs.get("idle") or []
+        if not isinstance(glyph, list):
+            return
+        self.canvas.create_rectangle(x - 4, y - 4, x + 39, y + 39, fill="#fffaf0", outline=INK, width=2)
+        for row_index, row in enumerate(glyph):
+            if not isinstance(row, str):
+                continue
+            for column_index, key in enumerate(row):
+                color = palette.get(key)
+                if not color or color == "transparent":
+                    continue
+                self._px(x + column_index * pixel, y + row_index * pixel, pixel, pixel, color)
 
     def _render_progress(self) -> None:
         checks = [
@@ -825,7 +843,7 @@ class SpiritDesktopPet:
         self.status.config(text=event, fg=color)
         self._append_event(event)
 
-    def _load_art_kit(self) -> tuple[dict, dict[str, dict]]:
+    def _load_art_kit(self) -> tuple[dict, dict[str, dict], dict]:
         try:
             manifest = json.loads(ART_MANIFEST_FILE.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -834,12 +852,16 @@ class SpiritDesktopPet:
             states_data = json.loads(ART_STATES_FILE.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             states_data = {}
+        try:
+            glyphs = json.loads(ART_GLYPHS_FILE.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            glyphs = {}
         states = {
             str(item.get("id")): item
             for item in states_data.get("states", [])
             if isinstance(item, dict) and item.get("id")
         }
-        return manifest, states
+        return manifest, states, glyphs
 
     def _art_state(self, state: str) -> dict:
         return self.art_states.get(state, {})

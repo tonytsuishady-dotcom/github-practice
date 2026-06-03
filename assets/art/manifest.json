@@ -34,6 +34,12 @@
       "usage": "State labels, triggers, and visual notes"
     },
     {
+      "id": "state-glyphs",
+      "path": "state-glyphs.json",
+      "type": "pixel-glyph-data",
+      "usage": "Tiny runtime state icons shared by desktop pet and art-kit preview"
+    },
+    {
       "id": "art-kit-page-script",
       "path": "../../art-kit.js",
       "type": "preview-script",

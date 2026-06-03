@@ -13,12 +13,31 @@ const fallbackStates = [
   ["sleeping", "打坐犯困", "Long idle time", "Closed eyes and sleep marks"],
 ].map(([id, label, trigger, visual]) => ({ id, label, trigger, visual }));
 
-function renderStates(states) {
+function glyphMarkup(stateId, glyphData) {
+  const glyph = glyphData?.glyphs?.[stateId];
+  const palette = glyphData?.palette || {};
+  if (!Array.isArray(glyph)) return "";
+  const cells = glyph
+    .flatMap((row) =>
+      String(row)
+        .split("")
+        .map((key) => {
+          const color = palette[key];
+          const fill = !color || color === "transparent" ? "transparent" : color;
+          return `<i style="--fill:${fill}"></i>`;
+        }),
+    )
+    .join("");
+  return `<div class="state-glyph" aria-hidden="true">${cells}</div>`;
+}
+
+function renderStates(states, glyphData = {}) {
   if (!stateGrid) return;
   stateGrid.innerHTML = states
     .map(
       (state) => `
         <article>
+          ${glyphMarkup(state.id, glyphData)}
           <strong>${state.label}</strong>
           <code>${state.id}</code>
           <span><b>触发：</b>${state.trigger}</span>
@@ -86,10 +105,14 @@ manifestGrid?.addEventListener("click", async (event) => {
 
 async function loadStates() {
   try {
-    const response = await fetch("assets/art/states.json");
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    renderStates(data.states || fallbackStates);
+    const [statesResponse, glyphResponse] = await Promise.all([
+      fetch("assets/art/states.json"),
+      fetch("assets/art/state-glyphs.json"),
+    ]);
+    if (!statesResponse.ok) throw new Error(`HTTP ${statesResponse.status}`);
+    const data = await statesResponse.json();
+    const glyphData = glyphResponse.ok ? await glyphResponse.json() : {};
+    renderStates(data.states || fallbackStates, glyphData);
   } catch (_error) {
     renderStates(fallbackStates);
   }
