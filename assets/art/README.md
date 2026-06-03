@@ -35,6 +35,8 @@ The preview page `../../art-kit.html` uses `../../art-kit.js` to render:
 - `states.json` into readable state cards.
 - `manifest.json` into resource handoff cards.
 
+Resource handoff cards show thumbnails for image/SVG assets and include a copy-path button.
+
 ## Privacy
 
 Do not place user files, screenshots with private information, auth paths, token values, or real account identifiers in this folder.

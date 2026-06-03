@@ -1,5 +1,6 @@
 const stateGrid = document.querySelector("#stateGrid");
 const manifestGrid = document.querySelector("#manifestGrid");
+const manifestStatus = document.querySelector("#manifestStatus");
 
 const fallbackStates = [
   ["idle", "待机呼吸", "No recent input", "Neutral eyes, small breathing bounce"],
@@ -33,17 +34,55 @@ function renderManifest(assets) {
   manifestGrid.innerHTML = assets
     .map((asset) => {
       const href = asset.path.startsWith("../") ? asset.path : `assets/art/${asset.path}`;
+      const isPreviewable = /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(asset.path);
+      const preview = isPreviewable
+        ? `<img class="manifest-thumb" src="${href}" alt="${asset.id} preview" />`
+        : `<div class="manifest-filetype">${asset.type}</div>`;
       return `
         <article>
+          ${preview}
           <strong>${asset.id}</strong>
           <code>${asset.type}</code>
           <span><b>用途：</b>${asset.usage}</span>
           <a href="${href}">${asset.path}</a>
+          <button class="copy-path" type="button" data-path="${asset.path}">复制路径</button>
         </article>
       `;
     })
     .join("");
 }
+
+async function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const helper = document.createElement("textarea");
+  helper.value = text;
+  helper.setAttribute("readonly", "");
+  helper.style.position = "fixed";
+  helper.style.opacity = "0";
+  document.body.append(helper);
+  helper.select();
+  document.execCommand("copy");
+  helper.remove();
+}
+
+manifestGrid?.addEventListener("click", async (event) => {
+  const button = event.target.closest(".copy-path");
+  if (!button) return;
+  const path = button.dataset.path || "";
+  try {
+    await copyText(path);
+    button.textContent = "已复制";
+    if (manifestStatus) manifestStatus.textContent = `已复制：${path}`;
+    window.setTimeout(() => {
+      button.textContent = "复制路径";
+    }, 1200);
+  } catch (_error) {
+    if (manifestStatus) manifestStatus.textContent = `复制失败，请手动选择：${path}`;
+  }
+});
 
 async function loadStates() {
   try {
