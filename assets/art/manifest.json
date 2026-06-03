@@ -17,15 +17,21 @@
     },
     {
       "id": "taotie-mini",
-      "path": "sprites/taotie-mini.svg",
-      "type": "sprite-mark",
-      "usage": "Static mascot mark for documentation and share cards"
+      "path": "generated/taotie-static-mark-v1-256.png",
+      "type": "imagegen-static-mark",
+      "usage": "Static mascot mark derived from the imagegen mascot for documentation and share cards"
     },
     {
       "id": "taotie-mascot-v1",
       "path": "generated/taotie-mascot-v1-512.png",
       "type": "generated-raster-mascot",
       "usage": "Polished imagegen mascot reference for art direction, share cards, and future sprite work"
+    },
+    {
+      "id": "taotie-mini-svg-legacy",
+      "path": "sprites/taotie-mini.svg",
+      "type": "legacy-vector-mark",
+      "usage": "Legacy hand-drawn SVG kept for comparison only; no longer used as the primary static mark"
     },
     {
       "id": "taotie-state-sheet",

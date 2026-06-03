@@ -174,10 +174,10 @@ h2 {
 }
 
 .anchor-stage img {
-  width: 220px;
+  width: 250px;
   position: absolute;
-  left: 85px;
-  top: 54px;
+  left: 70px;
+  top: 44px;
   image-rendering: pixelated;
 }
 

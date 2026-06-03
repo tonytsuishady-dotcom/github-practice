@@ -11,3 +11,9 @@ This folder stores project-bound bitmap assets generated for the Codex Spirit Co
 - Prompt summary: cute chibi jade Taotie spirit pet, polished pixel-game sprite style, thick dark outline, cream belly, gold horns, coral blush, forehead gem, jade pendant, small scroll pack, no text, no watermark.
 
 The local `*-chromakey.png` intermediate files are ignored by Git.
+
+## taotie-static-mark-v1-256.png
+
+- Tool: derived locally from `taotie-mascot-v1-512.png`.
+- Purpose: replace the old hand-drawn SVG static mascot mark so the resource page uses one consistent character style.
+- Source role: static mark for README, web UI cards, anchor previews, and future share-card drafts.

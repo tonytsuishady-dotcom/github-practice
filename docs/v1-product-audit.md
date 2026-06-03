@@ -174,4 +174,5 @@
 - 精修 `assets/art/sprites/taotie-mini.svg`，让主视觉标记具备更完整的轮廓、层次、表情和装扮锚点可读性。
 - 新增 `assets/art/art-direction.json` 和资源页“美术精修方向”区块，用于约束后续素材不再停留在粗糙程序图。
 - 调用 `imagegen` 生成 `assets/art/generated/taotie-mascot-v1-512.png`，作为更高质量的饕餮主视觉参考，并接入 `art-kit.html` 和资源 manifest。
+- 将静态灵兽标记从手写 SVG 切换为 `assets/art/generated/taotie-static-mark-v1-256.png`，该文件由 imagegen 主视觉派生，解决主视觉和静态标记风格割裂的问题。
 - 资源包不替代桌宠运行时绘制；桌宠仍以程序化动画为主，资源包服务于封面、README、分享卡和设计工具。
