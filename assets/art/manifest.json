@@ -40,6 +40,12 @@
       "usage": "Tiny runtime state icons shared by desktop pet and art-kit preview"
     },
     {
+      "id": "cosmetic-anchors",
+      "path": "cosmetic-anchors.json",
+      "type": "anchor-data",
+      "usage": "Stable head, neck, and back slots for future dress-up items"
+    },
+    {
       "id": "art-kit-page-script",
       "path": "../../art-kit.js",
       "type": "preview-script",

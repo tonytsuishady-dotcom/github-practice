@@ -21,6 +21,7 @@ ART_DIR = ROOT / "assets" / "art"
 ART_MANIFEST_FILE = ART_DIR / "manifest.json"
 ART_STATES_FILE = ART_DIR / "states.json"
 ART_GLYPHS_FILE = ART_DIR / "state-glyphs.json"
+ART_ANCHORS_FILE = ART_DIR / "cosmetic-anchors.json"
 REFRESH_MS = 60_000
 FRAME_MS = 140
 
@@ -76,7 +77,7 @@ class SpiritDesktopPet:
         self.global_thread_started = False
         self.global_down: set[int] = set()
         self.last_global_input_at = 0.0
-        self.art_manifest, self.art_states, self.art_glyphs = self._load_art_kit()
+        self.art_manifest, self.art_states, self.art_glyphs, self.art_anchors = self._load_art_kit()
 
         self._load_local_state()
         self._build_ui()
@@ -788,6 +789,7 @@ class SpiritDesktopPet:
 
         art_state = self._art_state(state)
         art_text = art_state.get("label") or self._state_label()
+        self._draw_cosmetic_anchors(state)
         self._draw_state_glyph(42, 278, state, 5)
         self.canvas.create_text(x, 292, text=f"ART · {art_text}", fill="#65707f", font=("Microsoft YaHei UI", 9, "bold"))
         self.canvas.create_text(x, 308, text=f"{self.stage_name()} · 玉简 {self.scroll_count}", fill=INK, font=("Microsoft YaHei UI", 10, "bold"))
@@ -813,6 +815,26 @@ class SpiritDesktopPet:
                 if not color or color == "transparent":
                     continue
                 self._px(x + column_index * pixel, y + row_index * pixel, pixel, pixel, color)
+
+    def _draw_cosmetic_anchors(self, state: str) -> None:
+        anchors = self.art_anchors.get("anchors", [])
+        if not isinstance(anchors, list):
+            return
+        preview_active = state in {"clicking", "happy", "digesting"} or self.frame % 28 < 12
+        if not preview_active:
+            return
+        for anchor in anchors:
+            if not isinstance(anchor, dict):
+                continue
+            x = self._clamp_int(anchor.get("x"), 0, 390)
+            y = self._clamp_int(anchor.get("y"), 0, 340)
+            radius = self._clamp_int(anchor.get("radius"), 8, 28)
+            color = str(anchor.get("color") or GOLD)
+            label = str(anchor.get("label") or anchor.get("id") or "")
+            self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius, outline=color, width=2)
+            self.canvas.create_oval(x - 3, y - 3, x + 3, y + 3, fill=color, outline="")
+            if state in {"clicking", "happy"}:
+                self.canvas.create_text(x, y + radius + 10, text=label, fill=INK, font=("Microsoft YaHei UI", 8, "bold"))
 
     def _render_progress(self) -> None:
         checks = [
@@ -843,7 +865,7 @@ class SpiritDesktopPet:
         self.status.config(text=event, fg=color)
         self._append_event(event)
 
-    def _load_art_kit(self) -> tuple[dict, dict[str, dict], dict]:
+    def _load_art_kit(self) -> tuple[dict, dict[str, dict], dict, dict]:
         try:
             manifest = json.loads(ART_MANIFEST_FILE.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -856,12 +878,16 @@ class SpiritDesktopPet:
             glyphs = json.loads(ART_GLYPHS_FILE.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             glyphs = {}
+        try:
+            anchors = json.loads(ART_ANCHORS_FILE.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            anchors = {}
         states = {
             str(item.get("id")): item
             for item in states_data.get("states", [])
             if isinstance(item, dict) and item.get("id")
         }
-        return manifest, states, glyphs
+        return manifest, states, glyphs, anchors
 
     def _art_state(self, state: str) -> dict:
         return self.art_states.get(state, {})

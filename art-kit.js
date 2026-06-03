@@ -1,6 +1,8 @@
 const stateGrid = document.querySelector("#stateGrid");
 const manifestGrid = document.querySelector("#manifestGrid");
 const manifestStatus = document.querySelector("#manifestStatus");
+const anchorGrid = document.querySelector("#anchorGrid");
+const anchorStage = document.querySelector("#anchorStage");
 
 const fallbackStates = [
   ["idle", "待机呼吸", "No recent input", "Neutral eyes, small breathing bounce"],
@@ -71,6 +73,35 @@ function renderManifest(assets) {
     .join("");
 }
 
+function renderAnchors(anchors) {
+  if (!anchorGrid || !anchorStage) return;
+  anchorStage.querySelectorAll(".anchor-marker").forEach((node) => node.remove());
+  anchorGrid.innerHTML = anchors
+    .map((anchor) => {
+      const accepts = Array.isArray(anchor.accepts) ? anchor.accepts.join(", ") : "";
+      return `
+        <article>
+          <strong>${anchor.label}</strong>
+          <code>${anchor.id}</code>
+          <span><b>坐标：</b>${anchor.x}, ${anchor.y} · r${anchor.radius}</span>
+          <span><b>可挂：</b>${accepts}</span>
+          <span>${anchor.note}</span>
+        </article>
+      `;
+    })
+    .join("");
+  anchors.forEach((anchor) => {
+    const marker = document.createElement("span");
+    marker.className = "anchor-marker";
+    marker.textContent = anchor.label;
+    marker.style.setProperty("--diameter", `${anchor.radius * 2}px`);
+    marker.style.setProperty("--left", `${anchor.x - anchor.radius}px`);
+    marker.style.setProperty("--top", `${anchor.y - anchor.radius}px`);
+    marker.style.setProperty("--anchor-color", anchor.color || "#c8b983");
+    anchorStage.append(marker);
+  });
+}
+
 async function copyText(text) {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(text);
@@ -136,5 +167,17 @@ async function loadManifest() {
   }
 }
 
+async function loadAnchors() {
+  try {
+    const response = await fetch("assets/art/cosmetic-anchors.json");
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    renderAnchors(data.anchors || []);
+  } catch (_error) {
+    renderAnchors([]);
+  }
+}
+
 loadStates();
 loadManifest();
+loadAnchors();

@@ -1,0 +1,42 @@
+{
+  "name": "Codex Spirit Companion Cosmetic Anchors",
+  "version": 1,
+  "coordinateSystem": {
+    "target": "desktop_pet.py canvas",
+    "width": 390,
+    "height": 340,
+    "notes": "Coordinates are stable visual anchors for the current programmatic Taotie stage. Future sprites should preserve these slots."
+  },
+  "anchors": [
+    {
+      "id": "head",
+      "label": "头部",
+      "x": 180,
+      "y": 82,
+      "radius": 18,
+      "color": "#c8b983",
+      "accepts": ["hat", "halo", "horn charm", "forehead gem"],
+      "note": "Use for hats, halos, forehead gems, and horn-adjacent ornaments."
+    },
+    {
+      "id": "neck",
+      "label": "胸颈",
+      "x": 180,
+      "y": 206,
+      "radius": 16,
+      "color": "#6eddd7",
+      "accepts": ["collar", "jade pendant", "nameplate", "tiny bell"],
+      "note": "Use for collar charms, jade pendants, badges, and small status ornaments."
+    },
+    {
+      "id": "back",
+      "label": "背部",
+      "x": 268,
+      "y": 176,
+      "radius": 22,
+      "color": "#dd786f",
+      "accepts": ["backpack", "scroll case", "small wing", "tool pack"],
+      "note": "Use for backpacks, scroll cases, wings, and utility packs."
+    }
+  ]
+}

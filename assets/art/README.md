@@ -29,14 +29,16 @@ Future sprite sheets should follow this direction:
 - `icons/jade-slip.svg`: small jade-slip icon for file feeding or output records.
 - `states.json`: state labels, triggers, and visual notes for implementation/design sync.
 - `state-glyphs.json`: 7x7 pixel glyphs for runtime state badges and art-kit state previews.
+- `cosmetic-anchors.json`: stable head, neck, and back slots for future dress-up items.
 - `tokens.css`: shared art colors and UI tokens.
 
-`desktop_pet.py` reads `states.json` and `state-glyphs.json` at runtime. It maps the active pet state to an art-state label and a tiny pixel glyph. The pet remains programmatically animated for now, but the art kit is now part of the runtime handoff path.
+`desktop_pet.py` reads `states.json`, `state-glyphs.json`, and `cosmetic-anchors.json` at runtime. It maps the active pet state to an art-state label, a tiny pixel glyph, and stable cosmetic anchor guides. The pet remains programmatically animated for now, but the art kit is now part of the runtime handoff path.
 
 The preview page `../../art-kit.html` uses `../../art-kit.js` to render:
 
 - `states.json` into readable state cards.
 - `state-glyphs.json` into small pixel icons inside those state cards.
+- `cosmetic-anchors.json` into a dress-up anchor preview.
 - `manifest.json` into resource handoff cards.
 
 Resource handoff cards show thumbnails for image/SVG assets and include a copy-path button.
