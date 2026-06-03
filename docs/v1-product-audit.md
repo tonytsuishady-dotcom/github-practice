@@ -173,4 +173,5 @@
 - 新增 `assets/art/cosmetic-anchors.json`，固定头部、胸颈、背部三个装扮锚点；桌面版和美术资源页会共同读取这份数据。
 - 精修 `assets/art/sprites/taotie-mini.svg`，让主视觉标记具备更完整的轮廓、层次、表情和装扮锚点可读性。
 - 新增 `assets/art/art-direction.json` 和资源页“美术精修方向”区块，用于约束后续素材不再停留在粗糙程序图。
+- 调用 `imagegen` 生成 `assets/art/generated/taotie-mascot-v1-512.png`，作为更高质量的饕餮主视觉参考，并接入 `art-kit.html` 和资源 manifest。
 - 资源包不替代桌宠运行时绘制；桌宠仍以程序化动画为主，资源包服务于封面、README、分享卡和设计工具。

@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
 pet-inbox/
+assets/art/generated/*-chromakey.png
+assets/art/generated/taotie-mascot-v1.png
 deer-flow/
 wshobson-agents/

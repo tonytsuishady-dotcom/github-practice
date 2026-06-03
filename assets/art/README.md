@@ -24,6 +24,7 @@ Future sprite sheets should follow this direction:
 
 ## Current Deployable Assets
 
+- `generated/taotie-mascot-v1-512.png`: imagegen-generated polished mascot reference for higher-quality art direction.
 - `sprites/taotie-mini.svg`: simple static mascot mark for README, web UI, or share-card drafts.
 - `sprites/taotie-state-sheet.svg`: visual state sheet for the desktop pet's eight life states.
 - `icons/jade-slip.svg`: small jade-slip icon for file feeding or output records.

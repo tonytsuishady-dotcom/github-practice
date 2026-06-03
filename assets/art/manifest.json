@@ -22,6 +22,12 @@
       "usage": "Static mascot mark for documentation and share cards"
     },
     {
+      "id": "taotie-mascot-v1",
+      "path": "generated/taotie-mascot-v1-512.png",
+      "type": "generated-raster-mascot",
+      "usage": "Polished imagegen mascot reference for art direction, share cards, and future sprite work"
+    },
+    {
       "id": "taotie-state-sheet",
       "path": "sprites/taotie-state-sheet.svg",
       "type": "state-sheet",

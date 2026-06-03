@@ -94,6 +94,8 @@ http://localhost:3000/art-kit.html
 
 当前已开始美术精修：`assets/art/sprites/taotie-mini.svg` 从粗糙程序图升级为更完整的主视觉标记，并新增 `assets/art/art-direction.json` 作为美术质量标准，用来约束后续精灵图、装扮和分享卡。
 
+根据最新反馈，资源包新增 imagegen 生成的精修主视觉：`assets/art/generated/taotie-mascot-v1-512.png`。它比当前程序绘制版本更适合作为后续精灵图、封面和装扮设计的美术参考。
+
 浏览器 demo 的顶部和控制台里也加入了“美术资源”入口，方便从产品页面直接查看资源包。
 
 资源页会读取 `assets/art/states.json` 并生成状态说明卡片，便于把程序状态、动画触发条件和视觉设计统一起来。
