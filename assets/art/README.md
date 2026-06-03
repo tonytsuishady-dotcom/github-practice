@@ -27,6 +27,7 @@ Future sprite sheets should follow this direction:
 - `sprites/taotie-mini.svg`: simple static mascot mark for README, web UI, or share-card drafts.
 - `sprites/taotie-state-sheet.svg`: visual state sheet for the desktop pet's eight life states.
 - `icons/jade-slip.svg`: small jade-slip icon for file feeding or output records.
+- `art-direction.json`: art quality principles for polishing the mascot, sprites, cosmetics, and share-card assets.
 - `states.json`: state labels, triggers, and visual notes for implementation/design sync.
 - `state-glyphs.json`: 7x7 pixel glyphs for runtime state badges and art-kit state previews.
 - `cosmetic-anchors.json`: stable head, neck, and back slots for future dress-up items.
@@ -36,6 +37,7 @@ Future sprite sheets should follow this direction:
 
 The preview page `../../art-kit.html` uses `../../art-kit.js` to render:
 
+- `art-direction.json` into an art quality direction board.
 - `states.json` into readable state cards.
 - `state-glyphs.json` into small pixel icons inside those state cards.
 - `cosmetic-anchors.json` into a dress-up anchor preview.

@@ -171,4 +171,6 @@
 - 桌面版开始读取 `assets/art/states.json`，并把当前生命状态映射为美术状态标签，方便后续接入真正精灵图和装扮锚点。
 - 新增 `assets/art/state-glyphs.json`，为八种生命状态提供 7x7 小像素图标；桌面版和美术资源页会共同读取这份数据。
 - 新增 `assets/art/cosmetic-anchors.json`，固定头部、胸颈、背部三个装扮锚点；桌面版和美术资源页会共同读取这份数据。
+- 精修 `assets/art/sprites/taotie-mini.svg`，让主视觉标记具备更完整的轮廓、层次、表情和装扮锚点可读性。
+- 新增 `assets/art/art-direction.json` 和资源页“美术精修方向”区块，用于约束后续素材不再停留在粗糙程序图。
 - 资源包不替代桌宠运行时绘制；桌宠仍以程序化动画为主，资源包服务于封面、README、分享卡和设计工具。

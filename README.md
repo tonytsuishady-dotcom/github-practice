@@ -92,6 +92,8 @@ http://localhost:3000/art-kit.html
 
 资源包还新增 `assets/art/cosmetic-anchors.json`，先固定头部、胸颈和背部三个装扮锚点。桌面版会读取这些锚点并在互动状态下轻量显示，方便后续扩展帽子、玉佩、背包等装扮。
 
+当前已开始美术精修：`assets/art/sprites/taotie-mini.svg` 从粗糙程序图升级为更完整的主视觉标记，并新增 `assets/art/art-direction.json` 作为美术质量标准，用来约束后续精灵图、装扮和分享卡。
+
 浏览器 demo 的顶部和控制台里也加入了“美术资源”入口，方便从产品页面直接查看资源包。
 
 资源页会读取 `assets/art/states.json` 并生成状态说明卡片，便于把程序状态、动画触发条件和视觉设计统一起来。

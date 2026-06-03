@@ -62,6 +62,12 @@
       "path": "tokens.css",
       "type": "tokens",
       "usage": "Shared color tokens for browser UI and future art pages"
+    },
+    {
+      "id": "art-direction",
+      "path": "art-direction.json",
+      "type": "style-guide",
+      "usage": "Art quality principles and next asset targets"
     }
   ]
 }

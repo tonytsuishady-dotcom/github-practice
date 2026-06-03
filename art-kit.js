@@ -3,6 +3,8 @@ const manifestGrid = document.querySelector("#manifestGrid");
 const manifestStatus = document.querySelector("#manifestStatus");
 const anchorGrid = document.querySelector("#anchorGrid");
 const anchorStage = document.querySelector("#anchorStage");
+const directionGoal = document.querySelector("#directionGoal");
+const directionGrid = document.querySelector("#directionGrid");
 
 const fallbackStates = [
   ["idle", "待机呼吸", "No recent input", "Neutral eyes, small breathing bounce"],
@@ -102,6 +104,26 @@ function renderAnchors(anchors) {
   });
 }
 
+function renderDirection(direction) {
+  if (!directionGrid) return;
+  if (directionGoal && direction?.goal) {
+    directionGoal.textContent = direction.goal;
+  }
+  const principles = direction?.principles || [];
+  directionGrid.innerHTML = principles
+    .map(
+      (item) => `
+        <article>
+          <strong>${item.label}</strong>
+          <code>${item.id}</code>
+          <span>${item.summary}</span>
+          <span><b>检查：</b>${item.check}</span>
+        </article>
+      `,
+    )
+    .join("");
+}
+
 async function copyText(text) {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(text);
@@ -178,6 +200,18 @@ async function loadAnchors() {
   }
 }
 
+async function loadDirection() {
+  try {
+    const response = await fetch("assets/art/art-direction.json");
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    renderDirection(data);
+  } catch (_error) {
+    renderDirection({ principles: [] });
+  }
+}
+
 loadStates();
 loadManifest();
 loadAnchors();
+loadDirection();

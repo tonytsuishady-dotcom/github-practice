@@ -1,0 +1,43 @@
+{
+  "name": "Codex Spirit Companion Art Direction",
+  "version": 1,
+  "goal": "Move from rough programmer art toward a polished, readable, cute pixel desktop-pet style while keeping runtime assets lightweight.",
+  "principles": [
+    {
+      "id": "silhouette",
+      "label": "清晰轮廓",
+      "summary": "小尺寸也要一眼认出头、角、肚皮、爪子和尾巴。",
+      "check": "At 64px, the pet should still read as a jade Taotie spirit pet."
+    },
+    {
+      "id": "material",
+      "label": "材质层次",
+      "summary": "用少量高光和暗面区分玉色身体、奶油肚皮、古金角饰。",
+      "check": "Avoid flat color blocks; every major body part needs one highlight or shadow cue."
+    },
+    {
+      "id": "expression",
+      "label": "表情生命感",
+      "summary": "眼睛、嘴、腮红要传达贪吃、满足、犯困、发光开心等状态。",
+      "check": "The mood should be readable before reading the label."
+    },
+    {
+      "id": "runtime",
+      "label": "运行时轻量",
+      "summary": "桌宠继续用程序化动画和小图标驱动，不把所有状态一次性换成大图。",
+      "check": "Art upgrades should not make the desktop pet slow, hard to drag, or hard to inspect."
+    },
+    {
+      "id": "cosmetics",
+      "label": "装扮可扩展",
+      "summary": "头部、胸颈、背部三个锚点保持稳定，后续皮肤和饰品围绕这些位置增长。",
+      "check": "New art should preserve head, neck, and back slots."
+    }
+  ],
+  "nextAssets": [
+    "polished idle sprite",
+    "three cosmetic items: halo, jade pendant, scroll pack",
+    "small share-card mascot pose",
+    "state expression variants"
+  ]
+}
